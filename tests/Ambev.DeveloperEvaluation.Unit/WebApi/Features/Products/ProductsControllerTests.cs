@@ -1,11 +1,13 @@
 using Ambev.DeveloperEvaluation.Application.Products.CreateProduct;
 using Ambev.DeveloperEvaluation.Application.Products.GetProduct;
+using Ambev.DeveloperEvaluation.Application.Products.ListProducts;
 using Ambev.DeveloperEvaluation.Application.Products.UpdateProduct;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.CreateProduct;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.GetProduct;
+using Ambev.DeveloperEvaluation.WebApi.Features.Products.ListProducts;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.UpdateProduct;
 using AutoMapper;
 using FluentAssertions;
@@ -290,5 +292,151 @@ public class ProductsControllerTests
         
         response.Success.Should().BeFalse();
         response.Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task Given_ValidParameters_When_List_Then_ShouldReturnOkWithProducts()
+    {
+        // Arrange
+        var result = new ListProductsResult
+        {
+            Items = new List<ProductDto>
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Product 1",
+                    Description = "Description 1",
+                    Price = 10.00m,
+                    StockQuantity = 100,
+                    Category = ProductCategory.Beer,
+                    Status = ProductStatus.Active,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Product 2",
+                    Description = "Description 2",
+                    Price = 20.00m,
+                    StockQuantity = 200,
+                    Category = ProductCategory.Beer,
+                    Status = ProductStatus.Active,
+                    CreatedAt = DateTime.UtcNow
+                }
+            },
+            TotalCount = 2,
+            CurrentPage = 1,
+            PageSize = 10,
+            TotalPages = 1
+        };
+
+        var expectedResponse = new ListProductsResponse
+        {
+            Items = result.Items.Select(p => new ProductItemResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                StockQuantity = p.StockQuantity,
+                Category = p.Category,
+                Status = p.Status,
+                CreatedAt = p.CreatedAt
+            }),
+            TotalCount = result.TotalCount,
+            CurrentPage = result.CurrentPage,
+            PageSize = result.PageSize,
+            TotalPages = result.TotalPages
+        };
+
+        _mediator.Send(Arg.Any<ListProductsQuery>()).Returns(result);
+        _mapper.Map<ListProductsResponse>(result).Returns(expectedResponse);
+
+        // Act
+        var actionResult = await _controller.List(1, 10, ProductStatus.Active, ProductCategory.Beer, CancellationToken.None);
+
+        // Assert
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponseWithData<ListProductsResponse>>().Subject;
+        
+        response.Success.Should().BeTrue();
+        response.Message.Should().Be("Products retrieved successfully");
+        response.Data.Should().BeEquivalentTo(expectedResponse);
+
+        await _mediator.Received(1).Send(
+            Arg.Is<ListProductsQuery>(q => 
+                q.Page == 1 &&
+                q.PageSize == 10 &&
+                q.Status == ProductStatus.Active &&
+                q.Category == ProductCategory.Beer),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Given_InvalidParameters_When_List_Then_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var errorMessage = "Page must be greater than zero";
+        _mediator.Send(Arg.Any<ListProductsQuery>()).ThrowsAsync(new ValidationException(errorMessage));
+
+        // Act
+        var result = await _controller.List(0, 10, null, null, CancellationToken.None);
+
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task Given_NoFilters_When_List_Then_ShouldReturnAllProducts()
+    {
+        // Arrange
+        var result = new ListProductsResult
+        {
+            Items = new List<ProductDto>
+            {
+                new() { Id = Guid.NewGuid(), Category = ProductCategory.Beer, Status = ProductStatus.Active },
+                new() { Id = Guid.NewGuid(), Category = ProductCategory.Water, Status = ProductStatus.Inactive }
+            },
+            TotalCount = 2,
+            CurrentPage = 1,
+            PageSize = 10,
+            TotalPages = 1
+        };
+
+        var expectedResponse = new ListProductsResponse
+        {
+            Items = result.Items.Select(p => new ProductItemResponse { Id = p.Id, Category = p.Category, Status = p.Status }),
+            TotalCount = result.TotalCount,
+            CurrentPage = result.CurrentPage,
+            PageSize = result.PageSize,
+            TotalPages = result.TotalPages
+        };
+
+        _mediator.Send(Arg.Any<ListProductsQuery>()).Returns(result);
+        _mapper.Map<ListProductsResponse>(result).Returns(expectedResponse);
+
+        // Act
+        var actionResult = await _controller.List(cancellationToken: CancellationToken.None);
+
+        // Assert
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponseWithData<ListProductsResponse>>().Subject;
+        
+        response.Success.Should().BeTrue();
+        response.Data?.Items.Select(p => p.Category).Should().Contain(new[] { ProductCategory.Beer, ProductCategory.Water });
+        response.Data?.Items.Select(p => p.Status).Should().Contain(new[] { ProductStatus.Active, ProductStatus.Inactive });
+
+        await _mediator.Received(1).Send(
+            Arg.Is<ListProductsQuery>(q => 
+                q.Page == 1 &&
+                q.PageSize == 10 &&
+                q.Status == null &&
+                q.Category == null),
+            Arg.Any<CancellationToken>());
     }
 } 

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 
 namespace Ambev.DeveloperEvaluation.ORM.Repositories
@@ -57,6 +58,32 @@ namespace Ambev.DeveloperEvaluation.ORM.Repositories
         public async Task<IEnumerable<Product>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _context.Products.ToListAsync(cancellationToken);
+        }
+
+        public async Task<(IEnumerable<Product> Items, int TotalCount)> ListAsync(
+            int page,
+            int pageSize,
+            ProductStatus? status = null,
+            ProductCategory? category = null,
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.Products.AsQueryable();
+
+            if (status.HasValue)
+                query = query.Where(p => p.Status == status.Value);
+
+            if (category.HasValue)
+                query = query.Where(p => p.Category == category.Value);
+
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            var items = await query
+                .OrderBy(p => p.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return (items, totalCount);
         }
     }
 } 

@@ -8,7 +8,10 @@ using FluentValidation;
 using Ambev.DeveloperEvaluation.Application.Products.UpdateProduct;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.UpdateProduct;
 using Ambev.DeveloperEvaluation.Application.Products.GetProduct;
+using Ambev.DeveloperEvaluation.Application.Products.ListProducts;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.GetProduct;
+using Ambev.DeveloperEvaluation.Domain.Enums;
+using Ambev.DeveloperEvaluation.WebApi.Features.Products.ListProducts;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Products;
 
@@ -142,6 +145,57 @@ public class ProductsController : BaseController
             { 
                 Success = false,
                 Message = ex.Message
+            });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new ApiResponse 
+            { 
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Lists products with optional filtering and pagination
+    /// </summary>
+    /// <param name="page">Page number (starts at 1)</param>
+    /// <param name="pageSize">Items per page (max 100)</param>
+    /// <param name="status">Filter by product status</param>
+    /// <param name="category">Filter by product category</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>List of products</returns>
+    /// <response code="200">Returns the list of products</response>
+    /// <response code="400">If pagination parameters are invalid</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponseWithData<ListProductsResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> List(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] ProductStatus? status = null,
+        [FromQuery] ProductCategory? category = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var query = new ListProductsQuery
+            {
+                Page = page,
+                PageSize = pageSize,
+                Status = status,
+                Category = category
+            };
+
+            var result = await _mediator.Send(query, cancellationToken);
+            var response = _mapper.Map<ListProductsResponse>(result);
+
+            return Ok(new ApiResponseWithData<ListProductsResponse>
+            {
+                Success = true,
+                Message = "Products retrieved successfully",
+                Data = response
             });
         }
         catch (ValidationException ex)
