@@ -2,6 +2,8 @@ using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
 using AutoMapper;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
+using Ambev.DeveloperEvaluation.Application.Products.CreateProduct;
+using Ambev.DeveloperEvaluation.WebApi.Features.Products.CreateProduct;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Common;
 
@@ -11,5 +13,6 @@ public class MappingProfile : Profile
     {
         CreateMap<ListSalesResult, ListSalesResponse>();
         CreateMap<SaleDto, SaleItemResponse>();
+        CreateMap<CreateProductRequest, CreateProductCommand>();
     }
 } 
