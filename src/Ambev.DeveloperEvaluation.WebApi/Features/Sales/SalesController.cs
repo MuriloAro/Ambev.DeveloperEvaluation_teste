@@ -4,6 +4,8 @@ using AutoMapper;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.GetSale;
+using Ambev.DeveloperEvaluation.Application.Sales.ConfirmSale;
+using Ambev.DeveloperEvaluation.Domain.Exceptions;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 
@@ -52,6 +54,51 @@ public class SalesController : BaseController
             { 
                 Success = false,
                 Message = $"Sale with ID {id} not found"
+            });
+        }
+    }
+
+    /// <summary>
+    /// Confirms a specific sale by ID
+    /// </summary>
+    /// <param name="id">The unique identifier of the sale</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the confirmation</returns>
+    /// <response code="200">Returns the result of the confirmation</response>
+    /// <response code="404">If the sale is not found</response>
+    /// <response code="400">If the sale is invalid</response>
+    [HttpPost("{id:guid}/confirm")]
+    [ProducesResponseType(typeof(ApiResponseWithData<ConfirmSaleResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Confirm(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new ConfirmSaleCommand(id);
+            var result = await _mediator.Send(command, cancellationToken);
+
+            return Ok(new ApiResponseWithData<ConfirmSaleResult>
+            {
+                Success = true,
+                Message = "Sale confirmed successfully",
+                Data = result
+            });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new ApiResponse 
+            { 
+                Success = false,
+                Message = $"Sale with ID {id} not found"
+            });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new ApiResponse 
+            { 
+                Success = false,
+                Message = ex.Message
             });
         }
     }

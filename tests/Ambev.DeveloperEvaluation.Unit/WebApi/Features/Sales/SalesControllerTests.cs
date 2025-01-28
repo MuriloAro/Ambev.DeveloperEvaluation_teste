@@ -1,5 +1,7 @@
+using Ambev.DeveloperEvaluation.Application.Sales.ConfirmSale;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 using Ambev.DeveloperEvaluation.Domain.Enums;
+using Ambev.DeveloperEvaluation.Domain.Exceptions;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.GetSale;
@@ -84,5 +86,69 @@ public class SalesControllerTests
         
         response.Success.Should().BeFalse();
         response.Message.Should().Be($"Sale with ID {saleId} not found");
+    }
+
+    [Fact]
+    public async Task Given_ValidSaleId_When_Confirm_Then_ShouldReturnOkWithResult()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        var expectedResult = new ConfirmSaleResult 
+        { 
+            Success = true,
+            Message = "Sale confirmed successfully"
+        };
+
+        _mediator.Send(Arg.Any<ConfirmSaleCommand>()).Returns(expectedResult);
+
+        // Act
+        var result = await _controller.Confirm(saleId, CancellationToken.None);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponseWithData<ConfirmSaleResult>>().Subject;
+        
+        response.Success.Should().BeTrue();
+        response.Message.Should().Be("Sale confirmed successfully");
+        response.Data.Should().BeEquivalentTo(expectedResult);
+
+        await _mediator.Received(1).Send(Arg.Is<ConfirmSaleCommand>(c => c.SaleId == saleId));
+    }
+
+    [Fact]
+    public async Task Given_NonExistingSaleId_When_Confirm_Then_ShouldReturnNotFound()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        _mediator.Send(Arg.Any<ConfirmSaleCommand>()).ThrowsAsync(new KeyNotFoundException());
+
+        // Act
+        var result = await _controller.Confirm(saleId, CancellationToken.None);
+
+        // Assert
+        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var response = notFoundResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be($"Sale with ID {saleId} not found");
+    }
+
+    [Fact]
+    public async Task Given_InvalidSale_When_Confirm_Then_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        var errorMessage = "Cannot confirm a sale without items";
+        _mediator.Send(Arg.Any<ConfirmSaleCommand>()).ThrowsAsync(new DomainException(errorMessage));
+
+        // Act
+        var result = await _controller.Confirm(saleId, CancellationToken.None);
+
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be(errorMessage);
     }
 } 

@@ -3,6 +3,7 @@ using Ambev.DeveloperEvaluation.Domain.Common;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Events;
 using Ambev.DeveloperEvaluation.Domain.Validation;
+using Ambev.DeveloperEvaluation.Domain.Exceptions;
 
 namespace Ambev.DeveloperEvaluation.Domain.Entities;
 
@@ -49,14 +50,16 @@ public class Sale : BaseEntity
 
     public void Confirm()
     {
-        if (Status != SaleStatus.Pending)
-            throw new DomainException("Only pending sales can be confirmed");
-
         if (!_items.Any())
             throw new DomainException("Cannot confirm a sale without items");
 
+        if (Status != SaleStatus.Pending)
+            throw new DomainException("Only pending sales can be confirmed");
+
+        var previousStatus = Status;
         Status = SaleStatus.Confirmed;
-        // Opcional: Publicar evento SaleConfirmed
+        
+        _domainEvents.Add(new SaleModifiedEvent(Id, Number, previousStatus, Status));
     }
 
     public void Complete()
