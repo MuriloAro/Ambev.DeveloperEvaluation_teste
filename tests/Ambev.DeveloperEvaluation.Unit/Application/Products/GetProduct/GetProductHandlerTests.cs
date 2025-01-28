@@ -6,18 +6,21 @@ using FluentAssertions;
 using FluentValidation;
 using NSubstitute;
 using Xunit;
+using Microsoft.Extensions.Logging;
 
 namespace Ambev.DeveloperEvaluation.Unit.Application.Products.GetProduct;
 
 public class GetProductHandlerTests
 {
     private readonly IProductRepository _productRepository;
+    private readonly ILogger<GetProductHandler> _logger;
     private readonly GetProductHandler _handler;
 
     public GetProductHandlerTests()
     {
         _productRepository = Substitute.For<IProductRepository>();
-        _handler = new GetProductHandler(_productRepository);
+        _logger = Substitute.For<ILogger<GetProductHandler>>();
+        _handler = new GetProductHandler(_productRepository, _logger);
     }
 
     [Fact]

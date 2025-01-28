@@ -3,46 +3,65 @@ using FluentValidation;
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.CreateProduct;
 
 public class CreateProductHandler : IRequestHandler<CreateProductCommand, CreateProductResult>
 {
     private readonly IProductRepository _productRepository;
+    private readonly ILogger<CreateProductHandler> _logger;
 
-    public CreateProductHandler(IProductRepository productRepository)
+    public CreateProductHandler(
+        IProductRepository productRepository,
+        ILogger<CreateProductHandler> logger)
     {
         _productRepository = productRepository;
+        _logger = logger;
     }
 
     public async Task<CreateProductResult> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
-        await ValidateCommand(request);
-
-        var existingProduct = await _productRepository.GetByNameAsync(request.Name, cancellationToken);
-        if (existingProduct != null)
-            throw new ValidationException("A product with this name already exists");
-
-        var product = new Product
+        _logger.LogInformation("Creating product: {@Request}", new { request.Name, request.Category });
+        
+        try 
         {
-            Id = Guid.NewGuid(),
-            Name = request.Name,
-            Description = request.Description,
-            Price = request.Price,
-            StockQuantity = request.StockQuantity,
-            Category = request.Category,
-            Status = ProductStatus.Active,
-            CreatedAt = DateTime.UtcNow
-        };
+            await ValidateCommand(request);
 
-        var createdProduct = await _productRepository.CreateAsync(product, cancellationToken);
+            var existingProduct = await _productRepository.GetByNameAsync(request.Name, cancellationToken);
+            if (existingProduct != null)
+            {
+                _logger.LogWarning("Product with name {Name} already exists", request.Name);
+                throw new ValidationException("A product with this name already exists");
+            }
 
-        return new CreateProductResult
+            var product = new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                Description = request.Description,
+                Price = request.Price,
+                StockQuantity = request.StockQuantity,
+                Category = request.Category,
+                Status = ProductStatus.Active,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var createdProduct = await _productRepository.CreateAsync(product, cancellationToken);
+            _logger.LogInformation("Product created successfully: {@Product}", new { createdProduct.Id, createdProduct.Name });
+
+            return new CreateProductResult
+            {
+                Success = true,
+                Message = "Product created successfully",
+                ProductId = createdProduct.Id
+            };
+        }
+        catch (Exception ex)
         {
-            Success = true,
-            Message = "Product created successfully",
-            ProductId = createdProduct.Id
-        };
+            _logger.LogError(ex, "Error creating product: {Name}", request.Name);
+            throw;
+        }
     }
 
     private static Task ValidateCommand(CreateProductCommand command)

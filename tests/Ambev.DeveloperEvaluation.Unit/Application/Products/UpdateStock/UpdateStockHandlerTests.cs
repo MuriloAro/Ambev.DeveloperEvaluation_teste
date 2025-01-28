@@ -6,18 +6,21 @@ using FluentAssertions;
 using FluentValidation;
 using NSubstitute;
 using Xunit;
+using Microsoft.Extensions.Logging;
 
 namespace Ambev.DeveloperEvaluation.Unit.Application.Products.UpdateStock;
 
 public class UpdateStockHandlerTests
 {
     private readonly IProductRepository _productRepository;
+    private readonly ILogger<UpdateStockHandler> _logger;
     private readonly UpdateStockHandler _handler;
 
     public UpdateStockHandlerTests()
     {
         _productRepository = Substitute.For<IProductRepository>();
-        _handler = new UpdateStockHandler(_productRepository);
+        _logger = Substitute.For<ILogger<UpdateStockHandler>>();
+        _handler = new UpdateStockHandler(_productRepository, _logger);
     }
 
     [Fact]

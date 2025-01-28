@@ -4,6 +4,7 @@ using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 
@@ -12,12 +13,14 @@ namespace Ambev.DeveloperEvaluation.Unit.Application.Products.UpdateProduct;
 public class UpdateProductHandlerTests
 {
     private readonly IProductRepository _productRepository;
+    private readonly ILogger<UpdateProductHandler> _logger;
     private readonly UpdateProductHandler _handler;
 
     public UpdateProductHandlerTests()
     {
         _productRepository = Substitute.For<IProductRepository>();
-        _handler = new UpdateProductHandler(_productRepository);
+        _logger = Substitute.For<ILogger<UpdateProductHandler>>();
+        _handler = new UpdateProductHandler(_productRepository, _logger);
     }
 
     [Fact]
