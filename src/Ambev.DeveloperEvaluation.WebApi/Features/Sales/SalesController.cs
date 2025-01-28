@@ -6,6 +6,7 @@ using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.GetSale;
 using Ambev.DeveloperEvaluation.Application.Sales.ConfirmSale;
 using Ambev.DeveloperEvaluation.Domain.Exceptions;
+using Ambev.DeveloperEvaluation.Application.Sales.CompleteSale;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 
@@ -82,6 +83,51 @@ public class SalesController : BaseController
             {
                 Success = true,
                 Message = "Sale confirmed successfully",
+                Data = result
+            });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new ApiResponse 
+            { 
+                Success = false,
+                Message = $"Sale with ID {id} not found"
+            });
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new ApiResponse 
+            { 
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Completes a specific sale by ID
+    /// </summary>
+    /// <param name="id">The unique identifier of the sale</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the completion</returns>
+    /// <response code="200">Returns the result of the completion</response>
+    /// <response code="404">If the sale is not found</response>
+    /// <response code="400">If the sale cannot be completed</response>
+    [HttpPost("{id:guid}/complete")]
+    [ProducesResponseType(typeof(ApiResponseWithData<CompleteSaleResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Complete(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new CompleteSaleCommand(id);
+            var result = await _mediator.Send(command, cancellationToken);
+
+            return Ok(new ApiResponseWithData<CompleteSaleResult>
+            {
+                Success = true,
+                Message = "Sale completed successfully",
                 Data = result
             });
         }

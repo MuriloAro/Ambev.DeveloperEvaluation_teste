@@ -67,8 +67,10 @@ public class Sale : BaseEntity
         if (Status != SaleStatus.Confirmed)
             throw new DomainException("Only confirmed sales can be completed");
 
+        var previousStatus = Status;
         Status = SaleStatus.Completed;
-        // Opcional: Publicar evento SaleCompleted
+        
+        _domainEvents.Add(new SaleModifiedEvent(Id, Number, previousStatus, Status));
     }
 
     public void Cancel(string reason)

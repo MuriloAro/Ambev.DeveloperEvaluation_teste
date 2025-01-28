@@ -1,3 +1,4 @@
+using Ambev.DeveloperEvaluation.Application.Sales.CompleteSale;
 using Ambev.DeveloperEvaluation.Application.Sales.ConfirmSale;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 using Ambev.DeveloperEvaluation.Domain.Enums;
@@ -143,6 +144,70 @@ public class SalesControllerTests
 
         // Act
         var result = await _controller.Confirm(saleId, CancellationToken.None);
+
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task Given_ValidSaleId_When_Complete_Then_ShouldReturnOkWithResult()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        var expectedResult = new CompleteSaleResult 
+        { 
+            Success = true,
+            Message = "Sale completed successfully"
+        };
+
+        _mediator.Send(Arg.Any<CompleteSaleCommand>()).Returns(expectedResult);
+
+        // Act
+        var result = await _controller.Complete(saleId, CancellationToken.None);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponseWithData<CompleteSaleResult>>().Subject;
+        
+        response.Success.Should().BeTrue();
+        response.Message.Should().Be("Sale completed successfully");
+        response.Data.Should().BeEquivalentTo(expectedResult);
+
+        await _mediator.Received(1).Send(Arg.Is<CompleteSaleCommand>(c => c.SaleId == saleId));
+    }
+
+    [Fact]
+    public async Task Given_NonExistingSaleId_When_Complete_Then_ShouldReturnNotFound()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        _mediator.Send(Arg.Any<CompleteSaleCommand>()).ThrowsAsync(new KeyNotFoundException());
+
+        // Act
+        var result = await _controller.Complete(saleId, CancellationToken.None);
+
+        // Assert
+        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var response = notFoundResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be($"Sale with ID {saleId} not found");
+    }
+
+    [Fact]
+    public async Task Given_NonConfirmedSale_When_Complete_Then_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        var errorMessage = "Only confirmed sales can be completed";
+        _mediator.Send(Arg.Any<CompleteSaleCommand>()).ThrowsAsync(new DomainException(errorMessage));
+
+        // Act
+        var result = await _controller.Complete(saleId, CancellationToken.None);
 
         // Assert
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
