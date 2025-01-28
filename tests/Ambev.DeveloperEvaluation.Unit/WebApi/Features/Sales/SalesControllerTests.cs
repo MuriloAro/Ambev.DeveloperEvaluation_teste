@@ -2,18 +2,22 @@ using Ambev.DeveloperEvaluation.Application.Sales.CompleteSale;
 using Ambev.DeveloperEvaluation.Application.Sales.ConfirmSale;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 using Ambev.DeveloperEvaluation.Application.Sales.CancelSale;
+using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Exceptions;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.GetSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
 using AutoMapper;
+using Bogus;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
+using FluentValidation;
 
 namespace Ambev.DeveloperEvaluation.Unit.WebApi.Features.Sales;
 
@@ -277,6 +281,100 @@ public class SalesControllerTests
 
         // Act
         var result = await _controller.Cancel(saleId, reason, CancellationToken.None);
+
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task Given_ValidQuery_When_List_Then_ShouldReturnOkWithPagedSales()
+    {
+        // Arrange
+        var query = new ListSalesQuery
+        {
+            Page = 1,
+            PageSize = 10,
+            Status = SaleStatus.Pending
+        };
+
+        var result = new ListSalesResult
+        {
+            Items = new[]
+            {
+                new SaleDto
+                {
+                    Id = Guid.NewGuid(),
+                    Number = "SALE-123",
+                    Date = DateTime.UtcNow,
+                    Status = SaleStatus.Pending,
+                    TotalAmount = 100.00m
+                }
+            },
+            TotalCount = 1,
+            CurrentPage = 1,
+            PageSize = 10
+        };
+
+        var expectedResponse = new ListSalesResponse
+        {
+            Items = new[]
+            {
+                new SaleItemResponse
+                {
+                    Id = result.Items.First().Id,
+                    Number = "SALE-123",
+                    Date = result.Items.First().Date,
+                    Status = SaleStatus.Pending,
+                    TotalAmount = 100.00m
+                }
+            },
+            TotalCount = 1,
+            CurrentPage = 1,
+            PageSize = 10,
+            TotalPages = 1
+        };
+
+        _mediator.Send(Arg.Any<ListSalesQuery>()).Returns(result);
+        _mapper.Map<ListSalesResponse>(result).Returns(expectedResponse);
+
+        // Act
+        var actionResult = await _controller.List(
+            query.Page,
+            query.PageSize,
+            query.Status,
+            query.StartDate,
+            query.EndDate,
+            CancellationToken.None);
+
+        // Assert
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponseWithData<ListSalesResponse>>().Subject;
+        
+        response.Success.Should().BeTrue();
+        response.Message.Should().Be("Sales retrieved successfully");
+        response.Data.Should().BeEquivalentTo(expectedResponse);
+
+        await _mediator.Received(1).Send(
+            Arg.Is<ListSalesQuery>(q =>
+                q.Page == query.Page &&
+                q.PageSize == query.PageSize &&
+                q.Status == query.Status),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Given_InvalidQuery_When_List_Then_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var errorMessage = "Page must be greater than zero";
+        _mediator.Send(Arg.Any<ListSalesQuery>()).ThrowsAsync(new FluentValidation.ValidationException(errorMessage));
+
+        // Act
+        var result = await _controller.List(page: 0);
 
         // Assert
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;

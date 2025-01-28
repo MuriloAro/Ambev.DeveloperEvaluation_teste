@@ -8,6 +8,10 @@ using Ambev.DeveloperEvaluation.Application.Sales.ConfirmSale;
 using Ambev.DeveloperEvaluation.Domain.Exceptions;
 using Ambev.DeveloperEvaluation.Application.Sales.CompleteSale;
 using Ambev.DeveloperEvaluation.Application.Sales.CancelSale;
+using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
+using Ambev.DeveloperEvaluation.Domain.Enums;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
+using FluentValidation;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 
@@ -187,6 +191,60 @@ public class SalesController : BaseController
             });
         }
         catch (DomainException ex)
+        {
+            return BadRequest(new ApiResponse 
+            { 
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Lists sales with pagination and filters
+    /// </summary>
+    /// <param name="page">Page number (starts at 1)</param>
+    /// <param name="pageSize">Items per page (max 100)</param>
+    /// <param name="status">Filter by sale status</param>
+    /// <param name="startDate">Filter by start date</param>
+    /// <param name="endDate">Filter by end date</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Paged list of sales</returns>
+    /// <response code="200">Returns the paged list of sales</response>
+    /// <response code="400">If the query parameters are invalid</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponseWithData<ListSalesResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> List(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] SaleStatus? status = null,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var query = new ListSalesQuery
+            {
+                Page = page,
+                PageSize = pageSize,
+                Status = status,
+                StartDate = startDate,
+                EndDate = endDate
+            };
+
+            var result = await _mediator.Send(query, cancellationToken);
+            var response = _mapper.Map<ListSalesResponse>(result);
+
+            return Ok(new ApiResponseWithData<ListSalesResponse>
+            {
+                Success = true,
+                Message = "Sales retrieved successfully",
+                Data = response
+            });
+        }
+        catch (ValidationException ex)
         {
             return BadRequest(new ApiResponse 
             { 
