@@ -1,6 +1,7 @@
 using Ambev.DeveloperEvaluation.Application.Sales.CompleteSale;
 using Ambev.DeveloperEvaluation.Application.Sales.ConfirmSale;
 using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
+using Ambev.DeveloperEvaluation.Application.Sales.CancelSale;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Exceptions;
 using Ambev.DeveloperEvaluation.WebApi.Common;
@@ -208,6 +209,74 @@ public class SalesControllerTests
 
         // Act
         var result = await _controller.Complete(saleId, CancellationToken.None);
+
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task Given_ValidSaleId_When_Cancel_Then_ShouldReturnOkWithResult()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        var reason = "Customer request";
+        var expectedResult = new CancelSaleResult 
+        { 
+            Success = true,
+            Message = "Sale cancelled successfully"
+        };
+
+        _mediator.Send(Arg.Any<CancelSaleCommand>()).Returns(expectedResult);
+
+        // Act
+        var result = await _controller.Cancel(saleId, reason, CancellationToken.None);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponseWithData<CancelSaleResult>>().Subject;
+        
+        response.Success.Should().BeTrue();
+        response.Message.Should().Be("Sale cancelled successfully");
+        response.Data.Should().BeEquivalentTo(expectedResult);
+
+        await _mediator.Received(1).Send(Arg.Is<CancelSaleCommand>(c => 
+            c.SaleId == saleId && c.Reason == reason));
+    }
+
+    [Fact]
+    public async Task Given_NonExistingSaleId_When_Cancel_Then_ShouldReturnNotFound()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        var reason = "Any reason";
+        _mediator.Send(Arg.Any<CancelSaleCommand>()).ThrowsAsync(new KeyNotFoundException());
+
+        // Act
+        var result = await _controller.Cancel(saleId, reason, CancellationToken.None);
+
+        // Assert
+        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var response = notFoundResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be($"Sale with ID {saleId} not found");
+    }
+
+    [Fact]
+    public async Task Given_CompletedSale_When_Cancel_Then_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var saleId = Guid.NewGuid();
+        var reason = "Any reason";
+        var errorMessage = "Completed sales cannot be cancelled";
+        _mediator.Send(Arg.Any<CancelSaleCommand>()).ThrowsAsync(new DomainException(errorMessage));
+
+        // Act
+        var result = await _controller.Cancel(saleId, reason, CancellationToken.None);
 
         // Assert
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
