@@ -7,6 +7,8 @@ using Ambev.DeveloperEvaluation.WebApi.Features.Products.CreateProduct;
 using FluentValidation;
 using Ambev.DeveloperEvaluation.Application.Products.UpdateProduct;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.UpdateProduct;
+using Ambev.DeveloperEvaluation.Application.Products.GetProduct;
+using Ambev.DeveloperEvaluation.WebApi.Features.Products.GetProduct;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Products;
 
@@ -86,6 +88,52 @@ public class ProductsController : BaseController
                 Success = true,
                 Message = "Product updated successfully",
                 Data = result
+            });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new ApiResponse 
+            { 
+                Success = false,
+                Message = ex.Message
+            });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new ApiResponse 
+            { 
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Gets a product by ID
+    /// </summary>
+    /// <param name="id">The ID of the product</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The product details</returns>
+    /// <response code="200">Returns the product details</response>
+    /// <response code="404">If the product is not found</response>
+    /// <response code="400">If the product ID is invalid</response>
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ApiResponseWithData<GetProductResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var query = new GetProductQuery { Id = id };
+            var result = await _mediator.Send(query, cancellationToken);
+            var response = _mapper.Map<GetProductResponse>(result);
+
+            return Ok(new ApiResponseWithData<GetProductResponse>
+            {
+                Success = true,
+                Message = "Product retrieved successfully",
+                Data = response
             });
         }
         catch (KeyNotFoundException ex)

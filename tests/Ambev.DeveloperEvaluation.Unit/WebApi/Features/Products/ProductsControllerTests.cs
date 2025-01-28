@@ -1,9 +1,11 @@
 using Ambev.DeveloperEvaluation.Application.Products.CreateProduct;
+using Ambev.DeveloperEvaluation.Application.Products.GetProduct;
 using Ambev.DeveloperEvaluation.Application.Products.UpdateProduct;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.CreateProduct;
+using Ambev.DeveloperEvaluation.WebApi.Features.Products.GetProduct;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.UpdateProduct;
 using AutoMapper;
 using FluentAssertions;
@@ -196,6 +198,91 @@ public class ProductsControllerTests
 
         // Act
         var result = await _controller.Update(Guid.NewGuid(), request, CancellationToken.None);
+
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        var response = badRequestResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task Given_ValidId_When_Get_Then_ShouldReturnOkWithProduct()
+    {
+        // Arrange
+        var productId = Guid.NewGuid();
+        var result = new GetProductResult
+        {
+            Id = productId,
+            Name = "Test Product",
+            Description = "Test Description",
+            Price = 10.00m,
+            StockQuantity = 100,
+            Category = ProductCategory.Beer,
+            Status = ProductStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var expectedResponse = new GetProductResponse
+        {
+            Id = result.Id,
+            Name = result.Name,
+            Description = result.Description,
+            Price = result.Price,
+            StockQuantity = result.StockQuantity,
+            Category = result.Category,
+            Status = result.Status,
+            CreatedAt = result.CreatedAt
+        };
+
+        _mediator.Send(Arg.Any<GetProductQuery>()).Returns(result);
+        _mapper.Map<GetProductResponse>(result).Returns(expectedResponse);
+
+        // Act
+        var actionResult = await _controller.Get(productId, CancellationToken.None);
+
+        // Assert
+        var okResult = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponseWithData<GetProductResponse>>().Subject;
+        
+        response.Success.Should().BeTrue();
+        response.Message.Should().Be("Product retrieved successfully");
+        response.Data.Should().BeEquivalentTo(expectedResponse);
+
+        await _mediator.Received(1).Send(
+            Arg.Is<GetProductQuery>(q => q.Id == productId),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Given_NonExistingProduct_When_Get_Then_ShouldReturnNotFound()
+    {
+        // Arrange
+        var productId = Guid.NewGuid();
+        var errorMessage = $"Product with ID {productId} not found";
+        _mediator.Send(Arg.Any<GetProductQuery>()).ThrowsAsync(new KeyNotFoundException(errorMessage));
+
+        // Act
+        var result = await _controller.Get(productId, CancellationToken.None);
+
+        // Assert
+        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var response = notFoundResult.Value.Should().BeOfType<ApiResponse>().Subject;
+        
+        response.Success.Should().BeFalse();
+        response.Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task Given_InvalidId_When_Get_Then_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var errorMessage = "Product Id is required";
+        _mediator.Send(Arg.Any<GetProductQuery>()).ThrowsAsync(new ValidationException(errorMessage));
+
+        // Act
+        var result = await _controller.Get(Guid.Empty, CancellationToken.None);
 
         // Assert
         var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;

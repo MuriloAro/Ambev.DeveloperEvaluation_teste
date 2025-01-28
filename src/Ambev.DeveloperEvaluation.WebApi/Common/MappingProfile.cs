@@ -6,6 +6,8 @@ using Ambev.DeveloperEvaluation.Application.Products.CreateProduct;
 using Ambev.DeveloperEvaluation.Application.Products.UpdateProduct;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.CreateProduct;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.UpdateProduct;
+using Ambev.DeveloperEvaluation.Application.Products.GetProduct;
+using Ambev.DeveloperEvaluation.WebApi.Features.Products.GetProduct;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Common;
 
@@ -17,5 +19,6 @@ public class MappingProfile : Profile
         CreateMap<SaleDto, SaleItemResponse>();
         CreateMap<CreateProductRequest, CreateProductCommand>();
         CreateMap<UpdateProductRequest, UpdateProductCommand>();
+        CreateMap<GetProductResult, GetProductResponse>();
     }
 } 
