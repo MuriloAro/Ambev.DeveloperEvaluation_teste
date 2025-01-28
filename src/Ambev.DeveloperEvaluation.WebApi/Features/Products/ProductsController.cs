@@ -12,6 +12,7 @@ using Ambev.DeveloperEvaluation.Application.Products.ListProducts;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.GetProduct;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.ListProducts;
+using Ambev.DeveloperEvaluation.Application.Products.ActivateProduct;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Products;
 
@@ -196,6 +197,51 @@ public class ProductsController : BaseController
                 Success = true,
                 Message = "Products retrieved successfully",
                 Data = response
+            });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new ApiResponse 
+            { 
+                Success = false,
+                Message = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Activates a product
+    /// </summary>
+    /// <param name="id">The ID of the product to activate</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Success message</returns>
+    /// <response code="200">Returns success message</response>
+    /// <response code="404">If the product is not found</response>
+    /// <response code="400">If the product ID is invalid or product is already active</response>
+    [HttpPatch("{id}/activate")]
+    [ProducesResponseType(typeof(ApiResponseWithData<ActivateProductResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Activate(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new ActivateProductCommand { Id = id };
+            var result = await _mediator.Send(command, cancellationToken);
+
+            return Ok(new ApiResponseWithData<ActivateProductResult>
+            {
+                Success = true,
+                Message = "Product activated successfully",
+                Data = result
+            });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new ApiResponse 
+            { 
+                Success = false,
+                Message = ex.Message
             });
         }
         catch (ValidationException ex)
