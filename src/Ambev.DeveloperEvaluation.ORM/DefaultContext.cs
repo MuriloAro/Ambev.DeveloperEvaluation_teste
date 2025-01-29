@@ -13,6 +13,7 @@ public class DefaultContext : DbContext
     public DbSet<Sale> Sales { get; set; }
     public DbSet<SaleItem> SaleItems { get; set; }
     public DbSet<Product> Products { get; set; } = null!;
+    public DbSet<Branch> Branches { get; set; } = null!;
 
     public DefaultContext(DbContextOptions<DefaultContext> options) : base(options)
     {
@@ -24,6 +25,7 @@ public class DefaultContext : DbContext
         modelBuilder.ApplyConfiguration(new SaleConfiguration());
         modelBuilder.ApplyConfiguration(new SaleItemConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
+        modelBuilder.ApplyConfiguration(new BranchConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }
