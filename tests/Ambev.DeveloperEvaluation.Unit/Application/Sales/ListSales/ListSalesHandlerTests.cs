@@ -86,7 +86,7 @@ public class ListSalesHandlerTests
         var sale = new Sale(Guid.NewGuid(), Guid.NewGuid());
         sale.AddItem(Guid.NewGuid(), 1, 100.00m);
         
-        if (status == SaleStatus.Confirmed || status == SaleStatus.Completed)
+        if (status == SaleStatus.Confirmed)
             sale.Confirm();
             
         if (status == SaleStatus.Completed)

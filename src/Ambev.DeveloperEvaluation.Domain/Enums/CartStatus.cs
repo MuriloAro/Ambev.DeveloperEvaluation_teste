@@ -1,9 +1,9 @@
 namespace Ambev.DeveloperEvaluation.Domain.Enums;
 
-public enum SaleStatus
+public enum CartStatus
 {
-    Pending,
-    Confirmed,
+    Active,
     Completed,
-    Cancelled
+    Abandoned,
+    Expired
 } 

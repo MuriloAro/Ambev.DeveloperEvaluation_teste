@@ -14,6 +14,8 @@ public class DefaultContext : DbContext
     public DbSet<SaleItem> SaleItems { get; set; }
     public DbSet<Product> Products { get; set; } = null!;
     public DbSet<Branch> Branches { get; set; } = null!;
+    public DbSet<Cart> Carts { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
 
     public DefaultContext(DbContextOptions<DefaultContext> options) : base(options)
     {
@@ -26,6 +28,8 @@ public class DefaultContext : DbContext
         modelBuilder.ApplyConfiguration(new SaleItemConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new BranchConfiguration());
+        modelBuilder.ApplyConfiguration(new CartConfiguration());
+        modelBuilder.ApplyConfiguration(new CartItemConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

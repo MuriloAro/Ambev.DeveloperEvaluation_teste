@@ -20,7 +20,19 @@ public class Sale : BaseEntity
     private readonly List<object> _domainEvents = new();
     public IReadOnlyCollection<object> DomainEvents => _domainEvents.AsReadOnly();
     
-    protected Sale() { } // Para o EF Core
+    private Sale() { } // Para o EF Core
+
+    public static Sale Create(Guid customerId, Guid branchId, string number)
+    {
+        return new Sale
+        {
+            CustomerId = customerId,
+            BranchId = branchId,
+            Number = number,
+            Date = DateTime.UtcNow,
+            Status = SaleStatus.Pending
+        };
+    }
 
     public Sale(Guid customerId, Guid branchId)
     {
