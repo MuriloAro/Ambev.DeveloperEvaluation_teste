@@ -5,6 +5,8 @@ using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Auth.AuthenticateUserFeature;
 using Ambev.DeveloperEvaluation.Application.Auth.AuthenticateUser;
 using Microsoft.AspNetCore.Authorization;
+using Ambev.DeveloperEvaluation.Application.Auth.RefreshToken;
+using Ambev.DeveloperEvaluation.WebApi.Features.Auth.RefreshTokenFeature;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Auth;
 
@@ -57,5 +59,31 @@ public class AuthController : BaseController
             Message = "User authenticated successfully",
             Data = _mapper.Map<AuthenticateUserResponse>(response)
         });
+    }
+
+    [HttpPost("refresh-token")]
+    [AllowAnonymous]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new RefreshTokenCommand { RefreshToken = request.RefreshToken };
+            var result = await _mediator.Send(command, cancellationToken);
+
+            return Ok(new ApiResponseWithData<RefreshTokenResponse>
+            {
+                Success = true,
+                Message = "Token refreshed successfully",
+                Data = _mapper.Map<RefreshTokenResponse>(result)
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new ApiResponse
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
     }
 }

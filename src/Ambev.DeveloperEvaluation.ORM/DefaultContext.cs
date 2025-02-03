@@ -16,6 +16,7 @@ public class DefaultContext : DbContext
     public DbSet<Branch> Branches { get; set; } = null!;
     public DbSet<Cart> Carts { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
     public DefaultContext(DbContextOptions<DefaultContext> options) : base(options)
     {
@@ -30,6 +31,7 @@ public class DefaultContext : DbContext
         modelBuilder.ApplyConfiguration(new BranchConfiguration());
         modelBuilder.ApplyConfiguration(new CartConfiguration());
         modelBuilder.ApplyConfiguration(new CartItemConfiguration());
+        modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }
@@ -47,7 +49,7 @@ public class YourDbContextFactory : IDesignTimeDbContextFactory<DefaultContext>
 
         builder.UseNpgsql(
                connectionString,
-               b => b.MigrationsAssembly("Ambev.DeveloperEvaluation.WebApi")
+               b => b.MigrationsAssembly("Ambev.DeveloperEvaluation.ORM")
         );
 
         return new DefaultContext(builder.Options);

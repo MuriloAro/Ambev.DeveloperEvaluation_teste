@@ -19,7 +19,9 @@ public sealed class AuthenticateUserProfile : Profile
 
         // Result -> Response
         CreateMap<AuthenticateUserResult, AuthenticateUserResponse>()
-            .ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.Token))
+            .ForMember(dest => dest.Token, opt => opt.MapFrom(src => src.AccessToken))
+            .ForMember(dest => dest.RefreshToken, opt => opt.MapFrom(src => src.RefreshToken))
+            .ForMember(dest => dest.AccessTokenExpiresAt, opt => opt.MapFrom(src => src.AccessTokenExpiresAt))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role));

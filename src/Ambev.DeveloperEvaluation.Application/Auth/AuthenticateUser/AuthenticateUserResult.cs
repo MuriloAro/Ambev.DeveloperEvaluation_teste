@@ -8,17 +8,17 @@ public sealed class AuthenticateUserResult
     /// <summary>
     /// Gets or sets the authentication token
     /// </summary>
-    public string Token { get; set; } = string.Empty;
+    public string AccessToken { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the user's unique identifier
+    /// Gets or sets the refresh token
     /// </summary>
-    public Guid Id { get; set; }
+    public string RefreshToken { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the user's name
+    /// Gets or sets the expiration date of the access token
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    public DateTime AccessTokenExpiresAt { get; set; }
 
     /// <summary>
     /// Gets or sets the user's email address
@@ -26,9 +26,9 @@ public sealed class AuthenticateUserResult
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the user's phone number
+    /// Gets or sets the user's name
     /// </summary>
-    public string Phone { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the user's role

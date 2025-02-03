@@ -143,4 +143,29 @@ public class User : BaseEntity, IUser
         Status = UserStatus.Suspended;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public List<RefreshToken> RefreshTokens { get; set; } = new();
+
+    public void AddRefreshToken(string token, DateTime expiresAt)
+    {
+        RefreshTokens.Add(new RefreshToken
+        {
+            Token = token,
+            ExpiresAt = expiresAt,
+            CreatedAt = DateTime.UtcNow,
+            UserId = Id
+        });
+    }
+
+    public void RevokeRefreshToken(string token, string? reason = null, string? replacedByToken = null)
+    {
+        var refreshToken = RefreshTokens.FirstOrDefault(r => r.Token == token);
+        
+        if (refreshToken != null && refreshToken.IsActive)
+        {
+            refreshToken.RevokedAt = DateTime.UtcNow;
+            refreshToken.RevokedReason = reason;
+            refreshToken.ReplacedByToken = replacedByToken;
+        }
+    }
 }

@@ -13,6 +13,16 @@ public sealed class AuthenticateUserResponse
     public string Token { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the refresh token for authenticated user
+    /// </summary>
+    public string RefreshToken { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the access token expiration date
+    /// </summary>
+    public DateTime AccessTokenExpiresAt { get; set; }
+
+    /// <summary>
     /// Gets or sets the user's email address
     /// </summary>
     public string Email { get; set; } = string.Empty;   

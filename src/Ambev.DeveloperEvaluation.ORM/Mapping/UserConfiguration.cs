@@ -11,21 +11,43 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.ToTable("Users");
 
-        builder.HasKey(u => u.Id);
-        builder.Property(u => u.Id).HasColumnType("uuid").HasDefaultValueSql("gen_random_uuid()");
+        builder.HasKey(x => x.Id);
 
-        builder.Property(u => u.Username).IsRequired().HasMaxLength(50);
-        builder.Property(u => u.Password).IsRequired().HasMaxLength(100);
-        builder.Property(u => u.Email).IsRequired().HasMaxLength(100);
-        builder.Property(u => u.Phone).HasMaxLength(20);
+        builder.Property(x => x.Username)
+            .IsRequired()
+            .HasMaxLength(50);
 
-        builder.Property(u => u.Status)
-            .HasConversion<string>()
+        builder.Property(x => x.Email)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Password)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Phone)
+            .IsRequired()
             .HasMaxLength(20);
 
-        builder.Property(u => u.Role)
-            .HasConversion<string>()
-            .HasMaxLength(20);
+        builder.Property(x => x.Role)
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasConversion<string>();
 
+        builder.Property(x => x.Status)
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasConversion<string>();
+
+        builder.Property(x => x.CreatedAt)
+            .IsRequired();
+
+        builder.Property(x => x.UpdatedAt);
+
+        // Configuração da coleção de RefreshTokens
+        builder.HasMany(x => x.RefreshTokens)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
