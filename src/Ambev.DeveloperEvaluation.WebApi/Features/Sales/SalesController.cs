@@ -12,11 +12,13 @@ using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class SalesController : BaseController
 {
     private readonly IMediator _mediator;
@@ -37,6 +39,7 @@ public class SalesController : BaseController
     /// <response code="200">Returns the sale details</response>
     /// <response code="404">If the sale is not found</response>
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Admin,Manager,Customer")]
     [ProducesResponseType(typeof(ApiResponseWithData<GetSaleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
@@ -74,6 +77,7 @@ public class SalesController : BaseController
     /// <response code="404">If the sale is not found</response>
     /// <response code="400">If the sale is invalid</response>
     [HttpPost("{id:guid}/confirm")]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<ConfirmSaleResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
@@ -119,6 +123,7 @@ public class SalesController : BaseController
     /// <response code="404">If the sale is not found</response>
     /// <response code="400">If the sale cannot be completed</response>
     [HttpPost("{id:guid}/complete")]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<CompleteSaleResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
@@ -165,6 +170,7 @@ public class SalesController : BaseController
     /// <response code="404">If the sale is not found</response>
     /// <response code="400">If the sale cannot be cancelled</response>
     [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<CancelSaleResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
@@ -213,6 +219,7 @@ public class SalesController : BaseController
     /// <response code="200">Returns the paged list of sales</response>
     /// <response code="400">If the query parameters are invalid</response>
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<ListSalesResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> List(

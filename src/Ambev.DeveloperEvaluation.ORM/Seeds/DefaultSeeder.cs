@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.ORM;
+using Ambev.DeveloperEvaluation.Common.Security;
 
 namespace Ambev.DeveloperEvaluation.ORM.Seeds;
 
@@ -13,7 +14,44 @@ public static class DefaultSeeder
     {
         if (!context.Users.Any())
         {
-            await SeedUsersAsync(context);
+            var passwordHasher = new BCryptPasswordHasher();
+
+            var users = new List<User>
+            {
+                new User
+                {
+                    Id = Guid.NewGuid(),
+                    Username = "Customer",
+                    Email = "customer@ambev.com",
+                    Password = passwordHasher.HashPassword("Customer123!"),
+                    Role = UserRole.Customer,
+                    Status = UserStatus.Active,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new User
+                {
+                    Id = Guid.NewGuid(),
+                    Username = "Admin",
+                    Email = "admin@ambev.com",
+                    Password = passwordHasher.HashPassword("Admin123!"),
+                    Role = UserRole.Admin,
+                    Status = UserStatus.Active,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new User
+                {
+                    Id = Guid.NewGuid(),
+                    Username = "Manager",
+                    Email = "manager@ambev.com",
+                    Password = passwordHasher.HashPassword("Manager123!"),
+                    Role = UserRole.Manager,
+                    Status = UserStatus.Active,
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
+
+            await context.Users.AddRangeAsync(users);
+            await context.SaveChangesAsync();
         }
 
         if (!context.Products.Any())
@@ -22,42 +60,6 @@ public static class DefaultSeeder
         }
 
         await context.SaveChangesAsync();
-    }
-
-    private static async Task SeedUsersAsync(DefaultContext context)
-    {
-        var users = new[]
-        {
-            new User 
-            { 
-                Username = "admin",
-                Email = "admin@ambev.com",
-                Password = "Admin123!",
-                Role = UserRole.Admin,
-                Status = UserStatus.Active,
-                CreatedAt = DateTime.UtcNow
-            },
-            new User 
-            { 
-                Username = "manager",
-                Email = "manager@ambev.com",
-                Password = "Manager123!",
-                Role = UserRole.Manager,
-                Status = UserStatus.Active,
-                CreatedAt = DateTime.UtcNow
-            },
-            new User 
-            { 
-                Username = "customer",
-                Email = "customer@ambev.com",
-                Password = "Customer123!",
-                Role = UserRole.Customer,
-                Status = UserStatus.Active,
-                CreatedAt = DateTime.UtcNow
-            }
-        };
-
-        await context.Users.AddRangeAsync(users);
     }
 
     private static async Task SeedProductsAsync(DefaultContext context)

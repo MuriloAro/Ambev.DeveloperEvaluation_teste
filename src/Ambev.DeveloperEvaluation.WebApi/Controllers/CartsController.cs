@@ -12,11 +12,13 @@ using Ambev.DeveloperEvaluation.Application.Queries.Carts.GetCartById;
 using Ambev.DeveloperEvaluation.Application.Queries.Carts.GetActiveCartByUserId;
 using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
 using Ambev.DeveloperEvaluation.WebApi.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CartsController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -29,6 +31,7 @@ public class CartsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Customer,Admin")]
     public async Task<ActionResult<CartDto>> Create([FromBody] CreateCartCommand command)
     {
         _logger.LogInformation("Creating cart for user {UserId}", command.UserId);
@@ -37,6 +40,7 @@ public class CartsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Customer,Admin,Manager")]
     public async Task<ActionResult<CartDto>> GetById(Guid id)
     {
         _logger.LogInformation("Getting cart {CartId}", id);
@@ -45,6 +49,7 @@ public class CartsController : ControllerBase
     }
 
     [HttpGet("user/{userId}/active")]
+    [Authorize(Roles = "Customer,Admin,Manager")]
     public async Task<ActionResult<CartDto>> GetActiveByUserId(Guid userId)
     {
         _logger.LogInformation("Getting active cart for user {UserId}", userId);
@@ -57,6 +62,7 @@ public class CartsController : ControllerBase
     }
 
     [HttpPost("{cartId}/items")]
+    [Authorize(Roles = "Customer,Admin")]
     public async Task<ActionResult<CartDto>> AddItem(Guid cartId, [FromBody] AddCartItemRequest request)
     {
         _logger.LogInformation("Adding item to cart {CartId}", cartId);
@@ -73,6 +79,7 @@ public class CartsController : ControllerBase
     }
 
     [HttpDelete("{cartId}/items/{productId}")]
+    [Authorize(Roles = "Customer,Admin")]
     public async Task<ActionResult<CartDto>> RemoveItem(Guid cartId, Guid productId)
     {
         _logger.LogInformation("Removing item from cart {CartId}", cartId);
@@ -88,6 +95,7 @@ public class CartsController : ControllerBase
     }
 
     [HttpPost("{cartId}/checkout")]
+    [Authorize(Roles = "Customer,Admin")]
     public async Task<ActionResult<SaleDto>> Checkout(Guid cartId, [FromBody] CheckoutCartRequest request)
     {
         _logger.LogInformation("Processing checkout for cart {CartId}", cartId);

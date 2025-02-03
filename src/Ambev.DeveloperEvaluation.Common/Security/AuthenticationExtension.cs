@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace Ambev.DeveloperEvaluation.Common.Security
 {
@@ -34,6 +36,35 @@ namespace Ambev.DeveloperEvaluation.Common.Security
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ClockSkew = TimeSpan.Zero
+                };
+
+                x.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices
+                            .GetRequiredService<ILogger<JwtBearerHandler>>();
+                        
+                        logger.LogWarning(
+                            "Authentication failed for request to {Path}. Error: {Error}",
+                            context.Request.Path,
+                            context.Exception.Message);
+
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices
+                            .GetRequiredService<ILogger<JwtBearerHandler>>();
+                        
+                        var user = context.Principal?.Identity?.Name;
+                        logger.LogInformation(
+                            "User {User} successfully authenticated for request to {Path}",
+                            user,
+                            context.Request.Path);
+
+                        return Task.CompletedTask;
+                    }
                 };
             });
 

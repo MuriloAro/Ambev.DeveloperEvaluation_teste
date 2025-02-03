@@ -16,11 +16,13 @@ using Ambev.DeveloperEvaluation.Application.Products.ActivateProduct;
 using Ambev.DeveloperEvaluation.Application.Products.DeactivateProduct;
 using Ambev.DeveloperEvaluation.Application.Products.UpdateStock;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.UpdateStock;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Products;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ProductsController : BaseController
 {
     private readonly IMediator _mediator;
@@ -41,6 +43,7 @@ public class ProductsController : BaseController
     /// <response code="200">Returns the created product ID</response>
     /// <response code="400">If the product data is invalid</response>
     [HttpPost]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<CreateProductResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateProductRequest request, CancellationToken cancellationToken)
@@ -78,6 +81,7 @@ public class ProductsController : BaseController
     /// <response code="400">If the product data is invalid</response>
     /// <response code="404">If the product is not found</response>
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<UpdateProductResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
@@ -125,6 +129,7 @@ public class ProductsController : BaseController
     /// <response code="404">If the product is not found</response>
     /// <response code="400">If the product ID is invalid</response>
     [HttpGet("{id}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponseWithData<GetProductResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
@@ -173,6 +178,7 @@ public class ProductsController : BaseController
     /// <response code="200">Returns the list of products</response>
     /// <response code="400">If pagination parameters are invalid</response>
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponseWithData<ListProductsResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> List(
@@ -222,6 +228,7 @@ public class ProductsController : BaseController
     /// <response code="404">If the product is not found</response>
     /// <response code="400">If the product ID is invalid or product is already active</response>
     [HttpPatch("{id}/activate")]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<ActivateProductResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
@@ -267,6 +274,7 @@ public class ProductsController : BaseController
     /// <response code="404">If the product is not found</response>
     /// <response code="400">If the product ID is invalid or product is already inactive</response>
     [HttpPatch("{id}/deactivate")]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<DeactivateProductResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
@@ -313,6 +321,7 @@ public class ProductsController : BaseController
     /// <response code="404">If the product is not found</response>
     /// <response code="400">If the product ID is invalid, product is inactive, or stock quantity is negative</response>
     [HttpPatch("{id}/stock")]
+    [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<UpdateStockResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
