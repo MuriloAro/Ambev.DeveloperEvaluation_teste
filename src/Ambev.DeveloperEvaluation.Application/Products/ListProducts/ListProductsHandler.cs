@@ -1,76 +1,59 @@
 using MediatR;
-using FluentValidation;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Ambev.DeveloperEvaluation.Domain.Repositories;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.ListProducts;
 
-public class ListProductsHandler : IRequestHandler<ListProductsQuery, ListProductsResult>
+/// <summary>
+/// Handler for processing product listing commands
+/// </summary>
+public sealed class ListProductsHandler : IRequestHandler<ListProductsCommand, ListProductsResult>
 {
     private readonly IProductRepository _productRepository;
+    private readonly IMapper _mapper;
     private readonly ILogger<ListProductsHandler> _logger;
 
-    public ListProductsHandler(
-        IProductRepository productRepository,
-        ILogger<ListProductsHandler> logger)
+    /// <summary>
+    /// Initializes a new instance of the ListProductsHandler
+    /// </summary>
+    /// <param name="productRepository">The product repository</param>
+    /// <param name="mapper">The automapper instance</param>
+    /// <param name="logger">The logger instance</param>
+    public ListProductsHandler(IProductRepository productRepository, IMapper mapper, ILogger<ListProductsHandler> logger)
     {
         _productRepository = productRepository;
+        _mapper = mapper;
         _logger = logger;
     }
 
-    public async Task<ListProductsResult> Handle(ListProductsQuery request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Handles the product listing command
+    /// </summary>
+    /// <param name="request">The listing command</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the listing operation</returns>
+    public async Task<ListProductsResult> Handle(ListProductsCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Listing products: {@Request}", new { request.Page, request.PageSize, request.Status, request.Category });
-        
-        try 
+        _logger.LogInformation("Listing products. Page: {Page}, PageSize: {PageSize}", request.Page, request.PageSize);
+
+        var (products, totalCount) = await _productRepository.ListAsync(
+            page: request.Page,
+            pageSize: request.PageSize,
+            category: request.Category
+        );
+
+        var result = new ListProductsResult
         {
-            if (request.Page <= 0)
-            {
-                _logger.LogWarning("Invalid page number: {Page}", request.Page);
-                throw new ValidationException("Page must be greater than zero");
-            }
+            Items = _mapper.Map<ICollection<ProductItemResult>>(products),
+            TotalCount = totalCount,
+            CurrentPage = request.Page,
+            PageSize = request.PageSize,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+        };
 
-            if (request.PageSize <= 0 || request.PageSize > 100)
-            {
-                _logger.LogWarning("Invalid page size: {PageSize}", request.PageSize);
-                throw new ValidationException("Page size must be between 1 and 100");
-            }
+        _logger.LogInformation("Found {Count} products", totalCount);
 
-            var (items, totalCount) = await _productRepository.ListAsync(
-                request.Page,
-                request.PageSize,
-                request.Status,
-                request.Category,
-                cancellationToken);
-
-            var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
-
-            _logger.LogInformation("Products listed successfully: {@Result}", new { TotalCount = totalCount, TotalPages = totalPages });
-
-            return new ListProductsResult
-            {
-                Items = items.Select(p => new ProductDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Price = p.Price,
-                    StockQuantity = p.StockQuantity,
-                    Category = p.Category,
-                    Status = p.Status,
-                    CreatedAt = p.CreatedAt,
-                    UpdatedAt = p.UpdatedAt
-                }),
-                TotalCount = totalCount,
-                CurrentPage = request.Page,
-                PageSize = request.PageSize,
-                TotalPages = totalPages
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error listing products: {@Request}", new { request.Page, request.PageSize });
-            throw;
-        }
+        return result;
     }
 } 

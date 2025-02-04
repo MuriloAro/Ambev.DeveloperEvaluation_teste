@@ -1,16 +1,9 @@
-﻿using Ambev.DeveloperEvaluation.Application.Commands.Carts.AddItem;
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.Checkout;
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.CreateCart;
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.RemoveItem;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
+﻿using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Ambev.DeveloperEvaluation.ORM;
 using Ambev.DeveloperEvaluation.ORM.Repositories;
-using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Ambev.DeveloperEvaluation.IoC.ModuleInitializers;
 

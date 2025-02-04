@@ -1,36 +1,40 @@
 using MediatR;
-using Microsoft.Extensions.Logging;
+using AutoMapper;
+using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 
 namespace Ambev.DeveloperEvaluation.Application.Branches.CreateBranch;
 
+/// <summary>
+/// Handler for processing branch creation commands
+/// </summary>
 public sealed class CreateBranchHandler : IRequestHandler<CreateBranchCommand, CreateBranchResult>
 {
     private readonly IBranchRepository _branchRepository;
-    private readonly ILogger<CreateBranchHandler> _logger;
+    private readonly IMapper _mapper;
 
-    public CreateBranchHandler(IBranchRepository branchRepository, ILogger<CreateBranchHandler> logger)
+    /// <summary>
+    /// Initializes a new instance of the CreateBranchHandler
+    /// </summary>
+    /// <param name="branchRepository">The branch repository</param>
+    /// <param name="mapper">The automapper instance</param>
+    public CreateBranchHandler(IBranchRepository branchRepository, IMapper mapper)
     {
         _branchRepository = branchRepository;
-        _logger = logger;
+        _mapper = mapper;
     }
 
+    /// <summary>
+    /// Handles the branch creation command
+    /// </summary>
+    /// <param name="request">The creation command</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the creation operation</returns>
     public async Task<CreateBranchResult> Handle(CreateBranchCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating new branch with name: {Name}", request.Name);
-
-        var branch = new Domain.Entities.Branch(request.Name, request.State);
-        
+        var branch = new Branch(request.Name, request.State);
         await _branchRepository.AddAsync(branch);
 
-        _logger.LogInformation("Branch created successfully with ID: {Id}", branch.Id);
-
-        return new CreateBranchResult(
-            branch.Id,
-            branch.Name,
-            branch.State,
-            branch.IsActive,
-            branch.CreatedAt
-        );
+        return _mapper.Map<CreateBranchResult>(branch);
     }
 } 

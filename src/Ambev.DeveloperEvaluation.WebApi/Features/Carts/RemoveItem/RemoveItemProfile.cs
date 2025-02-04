@@ -1,5 +1,5 @@
+using Ambev.DeveloperEvaluation.Application.Carts.RemoveItem;
 using AutoMapper;
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.RemoveItem;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Carts.RemoveItem;
 
@@ -13,6 +13,6 @@ public sealed class RemoveItemProfile : Profile
     /// </summary>
     public RemoveItemProfile()
     {
-        CreateMap<RemoveItemRequest, RemoveCartItemCommand>();
+        CreateMap<RemoveItemRequest, RemoveItemCommand>();
     }
 } 

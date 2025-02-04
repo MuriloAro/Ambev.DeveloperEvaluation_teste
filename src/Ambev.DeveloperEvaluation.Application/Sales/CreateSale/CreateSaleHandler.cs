@@ -1,38 +1,58 @@
-using AutoMapper;
 using MediatR;
-using FluentValidation;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
 using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Domain.Exceptions;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 
-public class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleResult>
+/// <summary>
+/// Handler for processing sale creation commands
+/// </summary>
+public sealed class CreateSaleHandler : IRequestHandler<CreateSaleCommand, CreateSaleResult>
 {
     private readonly ISaleRepository _saleRepository;
-    private readonly IMapper _mapper;
+    private readonly ILogger<CreateSaleHandler> _logger;
 
-    public CreateSaleHandler(ISaleRepository saleRepository, IMapper mapper)
+    /// <summary>
+    /// Initializes a new instance of the CreateSaleHandler
+    /// </summary>
+    /// <param name="saleRepository">The sale repository</param>
+    /// <param name="logger">The logger instance</param>
+    public CreateSaleHandler(ISaleRepository saleRepository, ILogger<CreateSaleHandler> logger)
     {
         _saleRepository = saleRepository;
-        _mapper = mapper;
+        _logger = logger;
     }
 
-    public async Task<CreateSaleResult> Handle(CreateSaleCommand command, CancellationToken cancellationToken)
+    /// <summary>
+    /// Handles the sale creation command
+    /// </summary>
+    /// <param name="request">The creation command</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the creation operation</returns>
+    public async Task<CreateSaleResult> Handle(CreateSaleCommand request, CancellationToken cancellationToken)
     {
-        var validator = new CreateSaleValidator();
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
+        _logger.LogInformation("Creating new sale for customer: {CustomerId} at branch: {BranchId}", 
+            request.CustomerId, request.BranchId);
 
-        if (!validationResult.IsValid)
-            throw new ValidationException(validationResult.Errors);
+        var sale = new Sale(request.CustomerId, request.BranchId);
 
-        var sale = new Sale(command.CustomerId, command.BranchId);
-
-        foreach (var item in command.Items)
+        foreach (var item in request.Items)
         {
             sale.AddItem(item.ProductId, item.Quantity, item.UnitPrice);
         }
 
-        var createdSale = await _saleRepository.CreateAsync(sale, cancellationToken);
-        return _mapper.Map<CreateSaleResult>(createdSale);
+        await _saleRepository.CreateAsync(sale);
+
+        _logger.LogInformation("Sale created successfully with ID: {SaleId}", sale.Id);
+
+        return new CreateSaleResult
+        {
+            Success = true,
+            Message = "Sale created successfully",
+            SaleId = sale.Id
+        };
     }
 } 

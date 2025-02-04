@@ -90,7 +90,7 @@ public class BranchesController : BaseController
         if (!validationResult.IsValid)
             return BadRequest(validationResult.Errors);
 
-        var query = _mapper.Map<GetBranchQuery>(request);
+        var query = _mapper.Map<GetBranchCommand>(request);
         var result = await _mediator.Send(query, cancellationToken);
 
         return Ok(new ApiResponseWithData<GetBranchResponse>
@@ -121,7 +121,7 @@ public class BranchesController : BaseController
         if (!validationResult.IsValid)
             return BadRequest(validationResult.Errors);
 
-        var query = _mapper.Map<ListBranchesQuery>(request);
+        var query = _mapper.Map<ListBranchesCommand>(request);
         var result = await _mediator.Send(query, cancellationToken);
 
         return Ok(new ApiResponseWithData<ListBranchesResponse>

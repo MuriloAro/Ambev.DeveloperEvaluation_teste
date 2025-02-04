@@ -1,81 +1,53 @@
 using MediatR;
-using FluentValidation;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Microsoft.Extensions.Logging;
+using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Domain.Exceptions;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.UpdateProduct;
 
-public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, UpdateProductResult>
+/// <summary>
+/// Handler for processing product update commands
+/// </summary>
+public sealed class UpdateProductHandler : IRequestHandler<UpdateProductCommand, UpdateProductResult>
 {
     private readonly IProductRepository _productRepository;
     private readonly ILogger<UpdateProductHandler> _logger;
 
-    public UpdateProductHandler(
-        IProductRepository productRepository,
-        ILogger<UpdateProductHandler> logger)
+    /// <summary>
+    /// Initializes a new instance of the UpdateProductHandler
+    /// </summary>
+    /// <param name="productRepository">The product repository</param>
+    /// <param name="logger">The logger instance</param>
+    public UpdateProductHandler(IProductRepository productRepository, ILogger<UpdateProductHandler> logger)
     {
         _productRepository = productRepository;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Handles the product update command
+    /// </summary>
+    /// <param name="request">The update command</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the update operation</returns>
     public async Task<UpdateProductResult> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Updating product: {@Request}", new { request.Id, request.Name });
-        
-        try 
+        _logger.LogInformation("Updating product with ID: {ProductId}", request.Id);
+
+        var product = await _productRepository.GetByIdAsync(request.Id);
+        if (product == null)
         {
-            if (request.Id == Guid.Empty)
-                throw new ValidationException("Product Id is required");
-
-            await ValidateCommand(request);
-
-            var product = await _productRepository.GetByIdAsync(request.Id, cancellationToken);
-            if (product == null)
-            {
-                _logger.LogWarning("Product not found: {Id}", request.Id);
-                throw new KeyNotFoundException($"Product with ID {request.Id} not found");
-            }
-
-            var existingProduct = await _productRepository.GetByNameAsync(request.Name, cancellationToken);
-            if (existingProduct != null && existingProduct.Id != request.Id)
-            {
-                _logger.LogWarning("Product with name {Name} already exists", request.Name);
-                throw new ValidationException("A product with this name already exists");
-            }
-
-            product.Name = request.Name;
-            product.Description = request.Description;
-            product.Price = request.Price;
-            product.Category = request.Category;
-            product.UpdatedAt = DateTime.UtcNow;
-
-            await _productRepository.UpdateAsync(product, cancellationToken);
-            _logger.LogInformation("Product updated successfully: {@Product}", new { product.Id, product.Name });
-
-            return new UpdateProductResult
-            {
-                Success = true,
-                Message = "Product updated successfully"
-            };
+            throw new DomainException("Product not found");
         }
-        catch (Exception ex)
+
+        await _productRepository.UpdateAsync(product);
+
+        _logger.LogInformation("Product updated successfully");
+
+        return new UpdateProductResult
         {
-            _logger.LogError(ex, "Error updating product: {Id}", request.Id);
-            throw;
-        }
-    }
-
-    private static Task ValidateCommand(UpdateProductCommand command)
-    {
-        if (string.IsNullOrWhiteSpace(command.Name))
-            throw new ValidationException("Name is required");
-
-        if (string.IsNullOrWhiteSpace(command.Description))
-            throw new ValidationException("Description is required");
-
-        if (command.Price <= 0)
-            throw new ValidationException("Price must be greater than zero");
-
-        return Task.CompletedTask;
+            Success = true,
+            Message = "Product updated successfully"
+        };
     }
 } 

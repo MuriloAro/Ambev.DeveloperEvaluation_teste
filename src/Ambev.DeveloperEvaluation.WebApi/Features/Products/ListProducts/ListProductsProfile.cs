@@ -13,8 +13,7 @@ public sealed class ListProductsProfile : Profile
     /// </summary>
     public ListProductsProfile()
     {
-        CreateMap<ListProductsRequest, ListProductsQuery>();
-        CreateMap<ProductDto, ProductItemResponse>();
+        CreateMap<ListProductsRequest, ListProductsCommand>();
         CreateMap<ListProductsResult, ListProductsResponse>()
             .ForMember(dest => dest.CurrentPage, opt => opt.MapFrom(src => src.CurrentPage))
             .ForMember(dest => dest.TotalPages, opt => opt.MapFrom(src => 

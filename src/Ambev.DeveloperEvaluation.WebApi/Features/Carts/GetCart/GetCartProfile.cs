@@ -1,6 +1,5 @@
+using Ambev.DeveloperEvaluation.Application.Carts.GetById;
 using AutoMapper;
-using Ambev.DeveloperEvaluation.Application.Queries.Carts.GetCartById;
-using Ambev.DeveloperEvaluation.Application.DTOs;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Carts.GetCart;
 
@@ -14,7 +13,7 @@ public sealed class GetCartProfile : Profile
     /// </summary>
     public GetCartProfile()
     {
-        CreateMap<GetCartRequest, GetCartByIdQuery>();
-        CreateMap<CartDto, GetCartResponse>();
+        CreateMap<GetCartRequest, GetByIdCommand>();
+        CreateMap<GetByIdResult, GetCartResponse>();
     }
 } 

@@ -1,9 +1,8 @@
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.AddItem;
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.Checkout;
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.CreateCart;
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.RemoveItem;
-using Ambev.DeveloperEvaluation.Application.Queries.Carts.GetCartById;
-using Ambev.DeveloperEvaluation.Application.Queries.Carts.GetActiveCartByUserId;
+using Ambev.DeveloperEvaluation.Application.Carts.AddItem;
+using Ambev.DeveloperEvaluation.Application.Carts.Checkout;
+using Ambev.DeveloperEvaluation.Application.Carts.GetActive;
+using Ambev.DeveloperEvaluation.Application.Carts.GetById;
+using Ambev.DeveloperEvaluation.Application.Carts.RemoveItem;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Carts.AddItem;
 using Ambev.DeveloperEvaluation.WebApi.Features.Carts.Checkout;
@@ -62,7 +61,7 @@ public class CartsController : BaseController
         if (!validationResult.IsValid)
             return BadRequest(validationResult.Errors);
 
-        var command = _mapper.Map<CreateCartCommand>(request);
+        var command = _mapper.Map<AddItemCommand>(request);
         var result = await _mediator.Send(command, cancellationToken);
 
         return Created(string.Empty, new ApiResponseWithData<CreateCartResponse>
@@ -94,7 +93,7 @@ public class CartsController : BaseController
         if (!validationResult.IsValid)
             return BadRequest(validationResult.Errors);
 
-        var query = _mapper.Map<GetCartByIdQuery>(request);
+        var query = _mapper.Map<GetByIdCommand>(request);
         var result = await _mediator.Send(query, cancellationToken);
 
         return Ok(new ApiResponseWithData<GetCartResponse>
@@ -128,7 +127,7 @@ public class CartsController : BaseController
         if (!validationResult.IsValid)
             return BadRequest(validationResult.Errors);
 
-        var command = _mapper.Map<AddCartItemCommand>(request);
+        var command = _mapper.Map<AddItemCommand>(request);
         command.CartId = cartId;
         var result = await _mediator.Send(command, cancellationToken);
 
@@ -162,7 +161,7 @@ public class CartsController : BaseController
         if (!validationResult.IsValid)
             return BadRequest(validationResult.Errors);
 
-        var command = _mapper.Map<RemoveCartItemCommand>(request);
+        var command = _mapper.Map<RemoveItemCommand>(request);
         command.CartId = cartId;
         await _mediator.Send(command, cancellationToken);
 
@@ -196,7 +195,7 @@ public class CartsController : BaseController
         if (!validationResult.IsValid)
             return BadRequest(validationResult.Errors);
 
-        var command = _mapper.Map<CheckoutCartCommand>(request);
+        var command = _mapper.Map<CheckoutCommand>(request);
         command.CartId = cartId;
         var result = await _mediator.Send(command, cancellationToken);
 
@@ -217,7 +216,7 @@ public class CartsController : BaseController
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetActiveByUserId([FromRoute] Guid userId, CancellationToken cancellationToken)
     {
-        var query = new GetActiveCartByUserIdQuery { UserId = userId };
+        var query = new GetActiveCommand() { UserId = userId };
         var result = await _mediator.Send(query, cancellationToken);
 
         if (result == null)

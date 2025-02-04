@@ -1,22 +1,40 @@
 using MediatR;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Ambev.DeveloperEvaluation.Domain.Exceptions;
 
 namespace Ambev.DeveloperEvaluation.Application.Branches.GetBranch;
 
-public sealed class GetBranchHandler : IRequestHandler<GetBranchQuery, GetBranchResult>
+/// <summary>
+/// Handler for processing branch retrieval commands
+/// </summary>
+public sealed class GetBranchHandler : IRequestHandler<GetBranchCommand, GetBranchResult>
 {
     private readonly IBranchRepository _branchRepository;
+    private readonly IMapper _mapper;
     private readonly ILogger<GetBranchHandler> _logger;
 
-    public GetBranchHandler(IBranchRepository branchRepository, ILogger<GetBranchHandler> logger)
+    /// <summary>
+    /// Initializes a new instance of the GetBranchHandler
+    /// </summary>
+    /// <param name="branchRepository">The branch repository</param>
+    /// <param name="mapper">The automapper instance</param>
+    /// <param name="logger">The logger instance</param>
+    public GetBranchHandler(IBranchRepository branchRepository, IMapper mapper, ILogger<GetBranchHandler> logger)
     {
         _branchRepository = branchRepository;
+        _mapper = mapper;
         _logger = logger;
     }
 
-    public async Task<GetBranchResult> Handle(GetBranchQuery request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Handles the branch retrieval command
+    /// </summary>
+    /// <param name="request">The retrieval command</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the retrieval operation</returns>
+    public async Task<GetBranchResult> Handle(GetBranchCommand request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Getting branch with ID: {BranchId}", request.Id);
 
@@ -25,13 +43,6 @@ public sealed class GetBranchHandler : IRequestHandler<GetBranchQuery, GetBranch
         if (branch == null)
             throw new DomainException("Branch not found");
 
-        return new GetBranchResult(
-            branch.Id,
-            branch.Name,
-            branch.State,
-            branch.IsActive,
-            branch.CreatedAt,
-            branch.UpdatedAt
-        );
+        return _mapper.Map<GetBranchResult>(branch);
     }
 } 

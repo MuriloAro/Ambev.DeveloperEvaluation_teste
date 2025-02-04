@@ -144,7 +144,7 @@ public class ProductsController : BaseController
     {
         try
         {
-            var query = new GetProductQuery { Id = id };
+            var query = new GetProductCommand { Id = id };
             var result = await _mediator.Send(query, cancellationToken);
             var response = _mapper.Map<GetProductResponse>(result);
 
@@ -197,7 +197,7 @@ public class ProductsController : BaseController
     {
         try
         {
-            var query = new ListProductsQuery
+            var query = new ListProductsCommand()
             {
                 Page = page,
                 PageSize = pageSize,
@@ -337,9 +337,9 @@ public class ProductsController : BaseController
         try
         {
             var command = new UpdateStockCommand 
-            { 
-                Id = id,
-                StockQuantity = request.StockQuantity
+            {
+                ProductId = id,
+                Quantity = request.StockQuantity
             };
             
             var result = await _mediator.Send(command, cancellationToken);

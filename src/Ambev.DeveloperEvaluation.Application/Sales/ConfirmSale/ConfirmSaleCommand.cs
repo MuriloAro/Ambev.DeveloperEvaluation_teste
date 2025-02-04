@@ -2,10 +2,13 @@ using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.ConfirmSale;
 
-public record ConfirmSaleCommand(Guid SaleId) : IRequest<ConfirmSaleResult>;
-
-public class ConfirmSaleResult
+/// <summary>
+/// Command for confirming a sale
+/// </summary>
+public sealed class ConfirmSaleCommand : IRequest<ConfirmSaleResult>
 {
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-} 
+    /// <summary>
+    /// Gets or sets the unique identifier of the sale to confirm
+    /// </summary>
+    public Guid Id { get; set; }
+}

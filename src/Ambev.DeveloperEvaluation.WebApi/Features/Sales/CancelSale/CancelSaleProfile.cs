@@ -13,7 +13,7 @@ public sealed class CancelSaleProfile : Profile
     /// </summary>
     public CancelSaleProfile()
     {
-        CreateMap<(Guid Id, string Reason), CancelSaleCommand>()
-            .ConstructUsing(src => new CancelSaleCommand(src.Id, src.Reason));
+        CreateMap<CancelSaleRequest, CancelSaleCommand>()
+            .ForMember(dest => dest.Reason, opt => opt.MapFrom(src => src.Reason));
     }
 } 

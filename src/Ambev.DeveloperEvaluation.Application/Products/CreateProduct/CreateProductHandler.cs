@@ -1,83 +1,57 @@
 using MediatR;
-using FluentValidation;
-using Ambev.DeveloperEvaluation.Domain.Entities;
-using Ambev.DeveloperEvaluation.Domain.Enums;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Microsoft.Extensions.Logging;
+using Ambev.DeveloperEvaluation.Domain.Entities;
+using Ambev.DeveloperEvaluation.Domain.Repositories;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.CreateProduct;
 
-public class CreateProductHandler : IRequestHandler<CreateProductCommand, CreateProductResult>
+/// <summary>
+/// Handler for processing product creation commands
+/// </summary>
+public sealed class CreateProductHandler : IRequestHandler<CreateProductCommand, CreateProductResult>
 {
     private readonly IProductRepository _productRepository;
     private readonly ILogger<CreateProductHandler> _logger;
 
-    public CreateProductHandler(
-        IProductRepository productRepository,
-        ILogger<CreateProductHandler> logger)
+    /// <summary>
+    /// Initializes a new instance of the CreateProductHandler
+    /// </summary>
+    /// <param name="productRepository">The product repository</param>
+    /// <param name="logger">The logger instance</param>
+    public CreateProductHandler(IProductRepository productRepository, ILogger<CreateProductHandler> logger)
     {
         _productRepository = productRepository;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Handles the product creation command
+    /// </summary>
+    /// <param name="request">The creation command</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the creation operation</returns>
     public async Task<CreateProductResult> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating product: {@Request}", new { request.Name, request.Category });
-        
-        try 
+        _logger.LogInformation("Creating new product: {Name}", request.Name);
+
+        var product = new Product
         {
-            await ValidateCommand(request);
+            Name = request.Name,
+            Description = request.Description,
+            Price = request.Price,
+            StockQuantity = request.StockQuantity,
+            Category = request.Category
+        };
 
-            var existingProduct = await _productRepository.GetByNameAsync(request.Name, cancellationToken);
-            if (existingProduct != null)
-            {
-                _logger.LogWarning("Product with name {Name} already exists", request.Name);
-                throw new ValidationException("A product with this name already exists");
-            }
+        await _productRepository.CreateAsync(product);
 
-            var product = new Product
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name,
-                Description = request.Description,
-                Price = request.Price,
-                StockQuantity = request.StockQuantity,
-                Category = request.Category,
-                Status = ProductStatus.Active,
-                CreatedAt = DateTime.UtcNow
-            };
+        _logger.LogInformation("Product created successfully with ID: {ProductId}", product.Id);
 
-            var createdProduct = await _productRepository.CreateAsync(product, cancellationToken);
-            _logger.LogInformation("Product created successfully: {@Product}", new { createdProduct.Id, createdProduct.Name });
-
-            return new CreateProductResult
-            {
-                Success = true,
-                Message = "Product created successfully",
-                ProductId = createdProduct.Id
-            };
-        }
-        catch (Exception ex)
+        return new CreateProductResult
         {
-            _logger.LogError(ex, "Error creating product: {Name}", request.Name);
-            throw;
-        }
-    }
-
-    private static Task ValidateCommand(CreateProductCommand command)
-    {
-        if (string.IsNullOrWhiteSpace(command.Name))
-            throw new ValidationException("Name is required");
-
-        if (string.IsNullOrWhiteSpace(command.Description))
-            throw new ValidationException("Description is required");
-
-        if (command.Price <= 0)
-            throw new ValidationException("Price must be greater than zero");
-
-        if (command.StockQuantity < 0)
-            throw new ValidationException("Stock quantity cannot be negative");
-
-        return Task.CompletedTask;
+            Success = true,
+            Message = "Product created successfully",
+            ProductId = product.Id
+        };
     }
 } 

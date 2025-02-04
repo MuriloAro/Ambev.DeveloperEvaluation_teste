@@ -1,65 +1,54 @@
 using MediatR;
-using FluentValidation;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
-using Ambev.DeveloperEvaluation.Domain.Enums;
 using Microsoft.Extensions.Logging;
+using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Domain.Exceptions;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.DeactivateProduct;
 
-public class DeactivateProductHandler : IRequestHandler<DeactivateProductCommand, DeactivateProductResult>
+/// <summary>
+/// Handler for processing product deactivation commands
+/// </summary>
+public sealed class DeactivateProductHandler : IRequestHandler<DeactivateProductCommand, DeactivateProductResult>
 {
     private readonly IProductRepository _productRepository;
     private readonly ILogger<DeactivateProductHandler> _logger;
 
-    public DeactivateProductHandler(
-        IProductRepository productRepository,
-        ILogger<DeactivateProductHandler> logger)
+    /// <summary>
+    /// Initializes a new instance of the DeactivateProductHandler
+    /// </summary>
+    /// <param name="productRepository">The product repository</param>
+    /// <param name="logger">The logger instance</param>
+    public DeactivateProductHandler(IProductRepository productRepository, ILogger<DeactivateProductHandler> logger)
     {
         _productRepository = productRepository;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Handles the product deactivation command
+    /// </summary>
+    /// <param name="request">The deactivation command</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the deactivation operation</returns>
     public async Task<DeactivateProductResult> Handle(DeactivateProductCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Deactivating product: {Id}", request.Id);
-        
-        try 
+        _logger.LogInformation("Deactivating product with ID: {ProductId}", request.Id);
+
+        var product = await _productRepository.GetByIdAsync(request.Id);
+        if (product == null)
         {
-            if (request.Id == Guid.Empty)
-            {
-                _logger.LogWarning("Invalid product id: empty guid");
-                throw new ValidationException("Product Id is required");
-            }
-
-            var product = await _productRepository.GetByIdAsync(request.Id, cancellationToken);
-            if (product == null)
-            {
-                _logger.LogWarning("Product not found: {Id}", request.Id);
-                throw new KeyNotFoundException($"Product with ID {request.Id} not found");
-            }
-
-            if (product.Status == ProductStatus.Inactive)
-            {
-                _logger.LogWarning("Product already inactive: {Id}", request.Id);
-                throw new ValidationException("Product is already inactive");
-            }
-
-            product.Status = ProductStatus.Inactive;
-            product.UpdatedAt = DateTime.UtcNow;
-
-            await _productRepository.UpdateAsync(product, cancellationToken);
-            _logger.LogInformation("Product deactivated successfully: {@Product}", new { product.Id, product.Name });
-
-            return new DeactivateProductResult
-            {
-                Success = true,
-                Message = "Product deactivated successfully"
-            };
+            throw new DomainException("Product not found");
         }
-        catch (Exception ex)
+
+        product.Deactivate();
+        await _productRepository.UpdateAsync(product);
+
+        _logger.LogInformation("Product deactivated successfully");
+
+        return new DeactivateProductResult
         {
-            _logger.LogError(ex, "Error deactivating product: {Id}", request.Id);
-            throw;
-        }
+            Success = true,
+            Message = "Product deactivated successfully"
+        };
     }
 } 

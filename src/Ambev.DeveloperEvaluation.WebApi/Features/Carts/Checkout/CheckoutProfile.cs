@@ -1,5 +1,4 @@
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.Checkout;
-using Ambev.DeveloperEvaluation.Application.Sales.ListSales;
+using Ambev.DeveloperEvaluation.Application.Carts.Checkout;
 using AutoMapper;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Carts.Checkout;
@@ -14,7 +13,7 @@ public sealed class CheckoutProfile : Profile
     /// </summary>
     public CheckoutProfile()
     {
-        CreateMap<CheckoutRequest, CheckoutCartCommand>();
-        CreateMap<SaleDto, CheckoutResponse>();
+        CreateMap<CheckoutRequest, CheckoutCommand>();
+        CreateMap<CheckoutResult, CheckoutResponse>();
     }
 } 

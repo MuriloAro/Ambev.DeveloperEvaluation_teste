@@ -13,7 +13,7 @@ public sealed class GetBranchProfile : Profile
     /// </summary>
     public GetBranchProfile()
     {
-        CreateMap<GetBranchRequest, GetBranchQuery>();
+        CreateMap<GetBranchRequest, GetBranchCommand>();
         CreateMap<GetBranchResult, GetBranchResponse>();
     }
 } 

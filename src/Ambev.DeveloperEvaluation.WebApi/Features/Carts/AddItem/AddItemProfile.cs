@@ -1,6 +1,6 @@
+using Ambev.DeveloperEvaluation.Application.Carts.AddItem;
+using Ambev.DeveloperEvaluation.WebApi.Features.Carts.GetCart;
 using AutoMapper;
-using Ambev.DeveloperEvaluation.Application.Commands.Carts.AddItem;
-using Ambev.DeveloperEvaluation.Application.DTOs;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Carts.AddItem;
 
@@ -14,7 +14,7 @@ public sealed class AddItemProfile : Profile
     /// </summary>
     public AddItemProfile()
     {
-        CreateMap<AddItemRequest, AddCartItemCommand>();
+        CreateMap<AddItemRequest, AddItemCommand>();
         CreateMap<CartItemDto, AddItemResponse>();
     }
 } 

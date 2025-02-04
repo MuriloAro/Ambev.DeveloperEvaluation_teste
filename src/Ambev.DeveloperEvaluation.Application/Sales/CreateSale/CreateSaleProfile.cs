@@ -3,12 +3,17 @@ using Ambev.DeveloperEvaluation.Domain.Entities;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.CreateSale;
 
-public class CreateSaleProfile : Profile
+/// <summary>
+/// AutoMapper profile for sale creation mappings
+/// </summary>
+public sealed class CreateSaleProfile : Profile
 {
+    /// <summary>
+    /// Initializes mapping configuration for sale creation
+    /// </summary>
     public CreateSaleProfile()
     {
         CreateMap<Sale, CreateSaleResult>()
-            .ForMember(dest => dest.TotalAmount, 
-                      opt => opt.MapFrom(src => src.TotalAmount));
+            .ForMember(dest => dest.SaleId, opt => opt.MapFrom(src => src.Id));
     }
 } 

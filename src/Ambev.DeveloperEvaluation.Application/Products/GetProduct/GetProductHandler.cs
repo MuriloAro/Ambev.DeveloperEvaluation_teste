@@ -1,60 +1,49 @@
 using MediatR;
-using FluentValidation;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Domain.Exceptions;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.GetProduct;
 
-public class GetProductHandler : IRequestHandler<GetProductQuery, GetProductResult>
+/// <summary>
+/// Handler for processing product retrieval commands
+/// </summary>
+public sealed class GetProductHandler : IRequestHandler<GetProductCommand, GetProductResult>
 {
     private readonly IProductRepository _productRepository;
+    private readonly IMapper _mapper;
     private readonly ILogger<GetProductHandler> _logger;
 
-    public GetProductHandler(
-        IProductRepository productRepository,
-        ILogger<GetProductHandler> logger)
+    /// <summary>
+    /// Initializes a new instance of the GetProductHandler
+    /// </summary>
+    /// <param name="productRepository">The product repository</param>
+    /// <param name="mapper">The automapper instance</param>
+    /// <param name="logger">The logger instance</param>
+    public GetProductHandler(IProductRepository productRepository, IMapper mapper, ILogger<GetProductHandler> logger)
     {
         _productRepository = productRepository;
+        _mapper = mapper;
         _logger = logger;
     }
 
-    public async Task<GetProductResult> Handle(GetProductQuery request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Handles the product retrieval command
+    /// </summary>
+    /// <param name="request">The retrieval command</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The result of the retrieval operation</returns>
+    public async Task<GetProductResult> Handle(GetProductCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting product: {Id}", request.Id);
-        
-        try 
-        {
-            if (request.Id == Guid.Empty)
-            {
-                _logger.LogWarning("Invalid product id: empty guid");
-                throw new ValidationException("Product Id is required");
-            }
+        _logger.LogInformation("Getting product with ID: {ProductId}", request.Id);
 
-            var product = await _productRepository.GetByIdAsync(request.Id, cancellationToken);
-            if (product == null)
-            {
-                _logger.LogWarning("Product not found: {Id}", request.Id);
-                throw new KeyNotFoundException($"Product with ID {request.Id} not found");
-            }
-
-            _logger.LogInformation("Product retrieved successfully: {@Product}", new { product.Id, product.Name });
-            return new GetProductResult
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                StockQuantity = product.StockQuantity,
-                Category = product.Category,
-                Status = product.Status,
-                CreatedAt = product.CreatedAt,
-                UpdatedAt = product.UpdatedAt
-            };
-        }
-        catch (Exception ex)
+        var product = await _productRepository.GetByIdAsync(request.Id);
+        if (product == null)
         {
-            _logger.LogError(ex, "Error getting product: {Id}", request.Id);
-            throw;
+            throw new DomainException("Product not found");
         }
+
+        return _mapper.Map<GetProductResult>(product);
     }
 } 

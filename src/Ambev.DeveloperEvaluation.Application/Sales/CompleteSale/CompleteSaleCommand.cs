@@ -2,10 +2,13 @@ using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.CompleteSale;
 
-public record CompleteSaleCommand(Guid SaleId) : IRequest<CompleteSaleResult>;
-
-public class CompleteSaleResult
+/// <summary>
+/// Command for completing a sale
+/// </summary>
+public sealed class CompleteSaleCommand : IRequest<CompleteSaleResult>
 {
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-} 
+    /// <summary>
+    /// Gets or sets the unique identifier of the sale to complete
+    /// </summary>
+    public Guid Id { get; set; }
+}

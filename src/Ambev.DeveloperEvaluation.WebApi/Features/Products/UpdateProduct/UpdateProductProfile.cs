@@ -15,6 +15,6 @@ public sealed class UpdateProductProfile : Profile
     public UpdateProductProfile()
     {
         CreateMap<UpdateProductRequest, UpdateProductCommand>();
-        CreateMap<ProductDto, UpdateProductResponse>();
+        CreateMap<ProductItemResult, UpdateProductResponse>();
     }
 } 

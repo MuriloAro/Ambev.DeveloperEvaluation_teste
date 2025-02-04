@@ -14,7 +14,7 @@ public sealed class GetProductProfile : Profile
     /// </summary>
     public GetProductProfile()
     {
-        CreateMap<GetProductRequest, GetProductQuery>();
-        CreateMap<ProductDto, GetProductResponse>();
+        CreateMap<GetProductRequest, GetProductCommand>();
+        CreateMap<GetProductResult, GetProductResponse>();
     }
 } 

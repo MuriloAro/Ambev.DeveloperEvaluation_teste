@@ -13,8 +13,8 @@ public sealed class ListSalesProfile : Profile
     /// </summary>
     public ListSalesProfile()
     {
-        CreateMap<ListSalesRequest, ListSalesQuery>();
+        CreateMap<ListSalesRequest, ListSalesCommand>();
         CreateMap<ListSalesResult, ListSalesResponse>();
-        CreateMap<SaleDto, SaleItemResponse>();
+        CreateMap<SaleItemResult, SaleItemResponse>();
     }
 } 

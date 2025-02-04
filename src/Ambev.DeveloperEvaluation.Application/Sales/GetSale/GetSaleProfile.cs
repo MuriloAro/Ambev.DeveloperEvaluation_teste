@@ -3,11 +3,17 @@ using Ambev.DeveloperEvaluation.Domain.Entities;
 
 namespace Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 
-public class GetSaleProfile : Profile
+/// <summary>
+/// AutoMapper profile for sale retrieval mappings
+/// </summary>
+public sealed class GetSaleProfile : Profile
 {
+    /// <summary>
+    /// Initializes mapping configuration for sale retrieval
+    /// </summary>
     public GetSaleProfile()
     {
         CreateMap<Sale, GetSaleResult>();
-        CreateMap<SaleItem, GetSaleItemResult>();
+        CreateMap<SaleItem, SaleItemResult>();
     }
 } 

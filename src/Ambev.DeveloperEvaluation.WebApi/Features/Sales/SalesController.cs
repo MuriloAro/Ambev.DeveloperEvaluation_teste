@@ -64,7 +64,7 @@ public class SalesController : BaseController
             if (!validationResult.IsValid)
                 return BadRequest(validationResult.Errors);
 
-            var query = new GetSaleQuery(id);
+            var query = new GetSaleCommand();
             var result = await _mediator.Send(query, cancellationToken);
             var response = _mapper.Map<GetSaleResponse>(result);
 
@@ -115,7 +115,7 @@ public class SalesController : BaseController
         if (!validationResult.IsValid)
             return BadRequest(validationResult.Errors);
 
-        var query = _mapper.Map<ListSalesQuery>(request);
+        var query = _mapper.Map<ListSalesCommand>(request);
         var result = await _mediator.Send(query, cancellationToken);
         var response = _mapper.Map<ListSalesResponse>(result);
 
@@ -241,18 +241,18 @@ public class SalesController : BaseController
     [ProducesResponseType(typeof(ApiResponseWithData<CancelSaleResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Cancel([FromRoute] Guid id, [FromBody] string reason, CancellationToken cancellationToken)
+    public async Task<IActionResult> Cancel([FromRoute] Guid id, [FromBody] CancelSaleRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var request = new CancelSaleRequest { Reason = reason };
             var validator = new CancelSaleRequestValidator();
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
 
             if (!validationResult.IsValid)
                 return BadRequest(validationResult.Errors);
 
-            var command = new CancelSaleCommand(id, reason);
+            var command = _mapper.Map<CancelSaleCommand>(request);
+            command.Id = id;
             var result = await _mediator.Send(command, cancellationToken);
 
             return Ok(new ApiResponseWithData<CancelSaleResult>
@@ -262,15 +262,7 @@ public class SalesController : BaseController
                 Data = result
             });
         }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new ApiResponse
-            {
-                Success = false,
-                Message = $"Sale with ID {id} not found"
-            });
-        }
-        catch (DomainException ex)
+        catch (Exception ex)
         {
             return BadRequest(new ApiResponse
             {

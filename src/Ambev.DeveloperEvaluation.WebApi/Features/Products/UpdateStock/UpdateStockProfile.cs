@@ -15,6 +15,6 @@ public sealed class UpdateStockProfile : Profile
     public UpdateStockProfile()
     {
         CreateMap<UpdateStockRequest, UpdateProductCommand>();
-        CreateMap<ProductDto, UpdateStockResponse>();
+        CreateMap<ProductItemResult, UpdateStockResponse>();
     }
 } 

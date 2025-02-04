@@ -2,13 +2,13 @@ using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.ActivateProduct;
 
-public class ActivateProductCommand : IRequest<ActivateProductResult>
+/// <summary>
+/// Command for activating a product
+/// </summary>
+public sealed class ActivateProductCommand : IRequest<ActivateProductResult>
 {
+    /// <summary>
+    /// Gets or sets the unique identifier of the product to activate
+    /// </summary>
     public Guid Id { get; set; }
 }
-
-public class ActivateProductResult
-{
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-} 

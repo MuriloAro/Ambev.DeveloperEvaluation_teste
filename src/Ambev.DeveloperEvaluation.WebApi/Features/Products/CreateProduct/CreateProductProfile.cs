@@ -15,6 +15,6 @@ public sealed class CreateProductProfile : Profile
     public CreateProductProfile()
     {
         CreateMap<CreateProductRequest, CreateProductCommand>();
-        CreateMap<ProductDto, CreateProductResponse>();
+        CreateMap<CreateProductResult, CreateProductResponse>();
     }
 } 

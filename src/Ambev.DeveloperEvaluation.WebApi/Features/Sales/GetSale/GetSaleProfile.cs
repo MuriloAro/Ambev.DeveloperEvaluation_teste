@@ -13,8 +13,8 @@ public sealed class GetSaleProfile : Profile
     /// </summary>
     public GetSaleProfile()
     {
-        CreateMap<GetSaleRequest, GetSaleQuery>();
+        CreateMap<GetSaleRequest, GetSaleCommand>();
         CreateMap<GetSaleResult, GetSaleResponse>();
-        CreateMap<GetSaleItemResult, GetSaleItemResponse>();
+        CreateMap<SaleItemResult, GetSaleItemResponse>();
     }
 } 

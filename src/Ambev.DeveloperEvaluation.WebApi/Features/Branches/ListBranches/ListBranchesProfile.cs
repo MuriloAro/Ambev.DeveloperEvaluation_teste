@@ -13,7 +13,7 @@ public sealed class ListBranchesProfile : Profile
     /// </summary>
     public ListBranchesProfile()
     {
-        CreateMap<ListBranchesRequest, ListBranchesQuery>();
+        CreateMap<ListBranchesRequest, ListBranchesCommand>();
         CreateMap<ListBranchesResult, ListBranchesResponse>();
         //CreateMap<BranchItemResult, BranchDto>();
     }

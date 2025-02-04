@@ -14,6 +14,6 @@ public sealed class ConfirmSaleProfile : Profile
     public ConfirmSaleProfile()
     {
         CreateMap<ConfirmSaleRequest, ConfirmSaleCommand>()
-            .ConstructUsing(src => new ConfirmSaleCommand(src.Id));
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id));
     }
 } 

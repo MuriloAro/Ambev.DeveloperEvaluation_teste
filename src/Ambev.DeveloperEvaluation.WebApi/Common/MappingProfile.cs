@@ -18,11 +18,11 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         CreateMap<ListSalesResult, ListSalesResponse>();
-        CreateMap<SaleDto, SaleItemResponse>();
+        CreateMap<SaleItemResult, SaleItemResponse>();
         CreateMap<CreateProductRequest, CreateProductCommand>();
         CreateMap<UpdateProductRequest, UpdateProductCommand>();
         CreateMap<GetProductResult, GetProductResponse>();
         CreateMap<ListProductsResult, ListProductsResponse>();
-        CreateMap<ProductDto, ProductItemResponse>();
+        CreateMap<ProductItemResult, ProductItemResponse>();
     }
 } 

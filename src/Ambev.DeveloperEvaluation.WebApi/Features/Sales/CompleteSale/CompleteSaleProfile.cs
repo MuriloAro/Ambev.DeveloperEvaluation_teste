@@ -14,6 +14,6 @@ public sealed class CompleteSaleProfile : Profile
     public CompleteSaleProfile()
     {
         CreateMap<CompleteSaleRequest, CompleteSaleCommand>()
-            .ConstructUsing(src => new CompleteSaleCommand(src.Id));
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id));
     }
 } 

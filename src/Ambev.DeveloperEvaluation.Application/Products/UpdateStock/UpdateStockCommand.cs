@@ -2,14 +2,18 @@ using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.UpdateStock;
 
-public class UpdateStockCommand : IRequest<UpdateStockResult>
+/// <summary>
+/// Command for updating a product's stock quantity
+/// </summary>
+public sealed class UpdateStockCommand : IRequest<UpdateStockResult>
 {
-    public Guid Id { get; set; }
-    public int StockQuantity { get; set; }
-}
+    /// <summary>
+    /// Gets or sets the unique identifier of the product
+    /// </summary>
+    public Guid ProductId { get; set; }
 
-public class UpdateStockResult
-{
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-} 
+    /// <summary>
+    /// Gets or sets the new stock quantity
+    /// </summary>
+    public int Quantity { get; set; }
+}
