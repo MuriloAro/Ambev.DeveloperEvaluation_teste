@@ -1,4 +1,5 @@
 using Ambev.DeveloperEvaluation.Application;
+using Ambev.DeveloperEvaluation.Application.Auth.AuthenticateUser;
 using Ambev.DeveloperEvaluation.Common.HealthChecks;
 using Ambev.DeveloperEvaluation.Common.Logging;
 using Ambev.DeveloperEvaluation.Common.Security;
@@ -86,7 +87,14 @@ public class Program
 
             builder.RegisterDependencies();
 
-            builder.Services.AddAutoMapper(typeof(Program).Assembly, typeof(ApplicationLayer).Assembly);
+            builder.Services.AddAutoMapper(cfg =>
+            {
+                cfg.AddMaps(new[]
+                {
+                    typeof(Program).Assembly,               // WebApi profiles
+                    typeof(AuthenticateUserProfile).Assembly // Application profiles
+                });
+            });
 
             builder.Services.AddMediatR(cfg =>
             {

@@ -100,9 +100,9 @@ public class CheckoutCartCommandHandler : IRequestHandler<CheckoutCartCommand, S
             await _productRepository.UpdateAsync(product);
         }
 
-        // Confirmar e completar a venda
-        sale.Confirm();
-        sale.Complete();
+        //// Confirmar e completar a venda
+        //sale.Confirm();
+        //sale.Complete();
 
         // Salvar venda
         sale = await _saleRepository.CreateAsync(sale);
