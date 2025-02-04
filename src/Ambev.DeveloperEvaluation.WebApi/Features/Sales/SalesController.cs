@@ -13,9 +13,17 @@ using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CancelSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.CompleteSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ConfirmSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.GetSale;
+using Ambev.DeveloperEvaluation.WebApi.Features.Sales.ListSales;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales;
 
+/// <summary>
+/// Controller for managing sale operations
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
@@ -24,6 +32,9 @@ public class SalesController : BaseController
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
 
+    /// <summary>
+    /// Initializes a new instance of the SalesController
+    /// </summary>
     public SalesController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
@@ -42,10 +53,17 @@ public class SalesController : BaseController
     [Authorize(Roles = "Admin,Manager,Customer")]
     [ProducesResponseType(typeof(ApiResponseWithData<GetSaleResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         try
         {
+            var request = new GetSaleRequest { Id = id };
+            var validator = new GetSaleRequestValidator();
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors);
+
             var query = new GetSaleQuery(id);
             var result = await _mediator.Send(query, cancellationToken);
             var response = _mapper.Map<GetSaleResponse>(result);
@@ -59,12 +77,54 @@ public class SalesController : BaseController
         }
         catch (KeyNotFoundException)
         {
-            return NotFound(new ApiResponse 
-            { 
+            return NotFound(new ApiResponse
+            {
                 Success = false,
                 Message = $"Sale with ID {id} not found"
             });
         }
+    }
+
+    /// <summary>
+    /// Lists sales with pagination and filters
+    /// </summary>
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    [ProducesResponseType(typeof(ApiResponseWithData<ListSalesResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> List(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] SaleStatus? status = null,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new ListSalesRequest
+        {
+            Page = page,
+            PageSize = pageSize,
+            Status = status,
+            StartDate = startDate,
+            EndDate = endDate
+        };
+
+        var validator = new ListSalesRequestValidator();
+        var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+        if (!validationResult.IsValid)
+            return BadRequest(validationResult.Errors);
+
+        var query = _mapper.Map<ListSalesQuery>(request);
+        var result = await _mediator.Send(query, cancellationToken);
+        var response = _mapper.Map<ListSalesResponse>(result);
+
+        return Ok(new ApiResponseWithData<ListSalesResponse>
+        {
+            Success = true,
+            Message = "Sales retrieved successfully",
+            Data = response
+        });
     }
 
     /// <summary>
@@ -81,11 +141,18 @@ public class SalesController : BaseController
     [ProducesResponseType(typeof(ApiResponseWithData<ConfirmSaleResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Confirm(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Confirm([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var command = new ConfirmSaleCommand(id);
+            var request = new ConfirmSaleRequest { Id = id };
+            var validator = new ConfirmSaleRequestValidator();
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors);
+
+            var command = _mapper.Map<ConfirmSaleCommand>(request);
             var result = await _mediator.Send(command, cancellationToken);
 
             return Ok(new ApiResponseWithData<ConfirmSaleResult>
@@ -97,16 +164,16 @@ public class SalesController : BaseController
         }
         catch (KeyNotFoundException)
         {
-            return NotFound(new ApiResponse 
-            { 
+            return NotFound(new ApiResponse
+            {
                 Success = false,
                 Message = $"Sale with ID {id} not found"
             });
         }
         catch (DomainException ex)
         {
-            return BadRequest(new ApiResponse 
-            { 
+            return BadRequest(new ApiResponse
+            {
                 Success = false,
                 Message = ex.Message
             });
@@ -127,11 +194,18 @@ public class SalesController : BaseController
     [ProducesResponseType(typeof(ApiResponseWithData<CompleteSaleResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Complete(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Complete([FromRoute] Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var command = new CompleteSaleCommand(id);
+            var request = new CompleteSaleRequest { Id = id };
+            var validator = new CompleteSaleRequestValidator();
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors);
+
+            var command = _mapper.Map<CompleteSaleCommand>(request);
             var result = await _mediator.Send(command, cancellationToken);
 
             return Ok(new ApiResponseWithData<CompleteSaleResult>
@@ -143,16 +217,16 @@ public class SalesController : BaseController
         }
         catch (KeyNotFoundException)
         {
-            return NotFound(new ApiResponse 
-            { 
+            return NotFound(new ApiResponse
+            {
                 Success = false,
                 Message = $"Sale with ID {id} not found"
             });
         }
         catch (DomainException ex)
         {
-            return BadRequest(new ApiResponse 
-            { 
+            return BadRequest(new ApiResponse
+            {
                 Success = false,
                 Message = ex.Message
             });
@@ -162,22 +236,22 @@ public class SalesController : BaseController
     /// <summary>
     /// Cancels a specific sale by ID
     /// </summary>
-    /// <param name="id">The unique identifier of the sale</param>
-    /// <param name="reason">The reason for cancellation</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>The result of the cancellation</returns>
-    /// <response code="200">Returns the result of the cancellation</response>
-    /// <response code="404">If the sale is not found</response>
-    /// <response code="400">If the sale cannot be cancelled</response>
     [HttpPost("{id:guid}/cancel")]
     [Authorize(Roles = "Admin,Manager")]
     [ProducesResponseType(typeof(ApiResponseWithData<CancelSaleResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Cancel(Guid id, [FromBody] string reason, CancellationToken cancellationToken)
+    public async Task<IActionResult> Cancel([FromRoute] Guid id, [FromBody] string reason, CancellationToken cancellationToken)
     {
         try
         {
+            var request = new CancelSaleRequest { Reason = reason };
+            var validator = new CancelSaleRequestValidator();
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors);
+
             var command = new CancelSaleCommand(id, reason);
             var result = await _mediator.Send(command, cancellationToken);
 
@@ -190,71 +264,16 @@ public class SalesController : BaseController
         }
         catch (KeyNotFoundException)
         {
-            return NotFound(new ApiResponse 
-            { 
+            return NotFound(new ApiResponse
+            {
                 Success = false,
                 Message = $"Sale with ID {id} not found"
             });
         }
         catch (DomainException ex)
         {
-            return BadRequest(new ApiResponse 
-            { 
-                Success = false,
-                Message = ex.Message
-            });
-        }
-    }
-
-    /// <summary>
-    /// Lists sales with pagination and filters
-    /// </summary>
-    /// <param name="page">Page number (starts at 1)</param>
-    /// <param name="pageSize">Items per page (max 100)</param>
-    /// <param name="status">Filter by sale status</param>
-    /// <param name="startDate">Filter by start date</param>
-    /// <param name="endDate">Filter by end date</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Paged list of sales</returns>
-    /// <response code="200">Returns the paged list of sales</response>
-    /// <response code="400">If the query parameters are invalid</response>
-    [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
-    [ProducesResponseType(typeof(ApiResponseWithData<ListSalesResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> List(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        [FromQuery] SaleStatus? status = null,
-        [FromQuery] DateTime? startDate = null,
-        [FromQuery] DateTime? endDate = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var query = new ListSalesQuery
+            return BadRequest(new ApiResponse
             {
-                Page = page,
-                PageSize = pageSize,
-                Status = status,
-                StartDate = startDate,
-                EndDate = endDate
-            };
-
-            var result = await _mediator.Send(query, cancellationToken);
-            var response = _mapper.Map<ListSalesResponse>(result);
-
-            return Ok(new ApiResponseWithData<ListSalesResponse>
-            {
-                Success = true,
-                Message = "Sales retrieved successfully",
-                Data = response
-            });
-        }
-        catch (ValidationException ex)
-        {
-            return BadRequest(new ApiResponse 
-            { 
                 Success = false,
                 Message = ex.Message
             });

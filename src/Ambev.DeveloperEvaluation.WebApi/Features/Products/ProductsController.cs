@@ -17,9 +17,13 @@ using Ambev.DeveloperEvaluation.Application.Products.DeactivateProduct;
 using Ambev.DeveloperEvaluation.Application.Products.UpdateStock;
 using Ambev.DeveloperEvaluation.WebApi.Features.Products.UpdateStock;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Products;
 
+/// <summary>
+/// Controller for managing product operations
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
@@ -28,6 +32,9 @@ public class ProductsController : BaseController
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
 
+    /// <summary>
+    /// Initializes a new instance of the ProductsController
+    /// </summary>
     public ProductsController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;

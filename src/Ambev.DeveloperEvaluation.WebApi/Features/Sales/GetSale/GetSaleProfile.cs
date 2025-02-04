@@ -3,10 +3,17 @@ using Ambev.DeveloperEvaluation.Application.Sales.GetSale;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Sales.GetSale;
 
-public class GetSaleProfile : Profile
+/// <summary>
+/// AutoMapper profile for sale retrieval mappings
+/// </summary>
+public sealed class GetSaleProfile : Profile
 {
+    /// <summary>
+    /// Initializes mapping configuration for sale retrieval
+    /// </summary>
     public GetSaleProfile()
     {
+        CreateMap<GetSaleRequest, GetSaleQuery>();
         CreateMap<GetSaleResult, GetSaleResponse>();
         CreateMap<GetSaleItemResult, GetSaleItemResponse>();
     }
